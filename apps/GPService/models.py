@@ -15,7 +15,7 @@ class Availability(models.Model):
     is_booked = models.BooleanField(default=False)
     doctor_charge = models.IntegerField(default=1000)
 
-class AvailabilityStatus(models.TextChoices):
+class AppointmentStatus(models.TextChoices):
     BOOKED = 'BOOKED', _('BOOKED')
     ONGOING = 'ONGOING', _('ONGOING')
     COMPLETED = 'COMPLETED', _('COMPLETED')
@@ -26,16 +26,15 @@ class Appointment(models.Model):
     availability = models.ForeignKey(Availability, on_delete=models.CASCADE)
     status = models.CharField(
         max_length=15,
-        choices=AvailabilityStatus.choices,
-        default=AvailabilityStatus.BOOKED   
+        choices=AppointmentStatus.choices,
+        default=AppointmentStatus.BOOKED   
         )
     attachment = models.TextField()
 
 class MedicineType(models.TextChoices):
-    LIQUID = 'LIQUID', _('LIQUID')
     TABLET = 'TABLET', _('TABLET')
     CAPSULES = 'CAPSULES', _('CAPSULES')
-    DROPS = 'DROPS', _('DROPS')
+    VACCINE = 'VACCINE', _('VACCINE')
 
 class Medicine(models.Model):
     name = models.CharField(max_length=200)
@@ -46,8 +45,15 @@ class Medicine(models.Model):
     available_quantity = models.IntegerField()
     price = models.DecimalField(max_digits=4, decimal_places=2)
 
-class TreatmentQuestion(models.Model):
-    treatment_name = models.CharField(max_length=100)
+class AvailableTreatment(models.TextChoices):
+    CANCER = 'CANCER', _('CANCER')
+    ALLERGIES = 'ALLERGIES', _('ALLERGIES')
+
+class FormAssessmentQuestion(models.Model):
+    treatment = models.CharField(
+        max_length=100,
+        choices=AvailableTreatment.choices
+        )
     question_title = models.CharField(max_length=200)
 
 class FormAssessmentType(models.TextChoices):
@@ -58,13 +64,15 @@ class FormAssessment(models.Model):
     patient = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='Takes',
+        related_name='formassessments',
+        blank=True,
         null=True
         )
     doctor = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='Assesses',
+        related_name='formassessments',
+        blank=True,
         null=True
         )
     type = models.CharField(
@@ -76,7 +84,7 @@ choices=FormAssessmentType.choices
     assessed_date = models.DateTimeField(null=True)
 
 class FormAssessmentAnswer(models.Model):
-    Treatment_question = models.ForeignKey(TreatmentQuestion, on_delete=models.CASCADE)
+    form_assessment_question = models.ForeignKey(FormAssessmentQuestion, on_delete=models.CASCADE)
     form_assessment = models.ForeignKey(FormAssessment, on_delete=models.CASCADE)
     answer = models.TextField()
 
@@ -91,11 +99,13 @@ class Prescription(models.Model):
     appointment = models.ForeignKey(
         Appointment,
         on_delete=models.CASCADE,
+        blank=True,
         null=True
         )
     form_assessment = models.ForeignKey(
         FormAssessment,
         on_delete=models.CASCADE,
+        blank=True,
         null=True
         )
     is_accepted = models.BooleanField(default=False)
@@ -118,11 +128,12 @@ class Order(models.Model):
     null=True
     )
     created_date = models.DateTimeField(timezone.now)
+total_amount = models.IntegerField(blank=True, null=True)
 
 class Country(models.Model):
     name = models.CharField(max_length=50)
 
 class RecommendedVaccine(models.Model)    :
-    Country = models.ForeignKey(Country, on_delete=models.CASCADE)
+    country = models.ForeignKey(Country, on_delete=models.CASCADE)
     Medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
     posted_date = models.DateTimeField(timezone.now)
