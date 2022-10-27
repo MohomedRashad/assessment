@@ -6,6 +6,7 @@ from unittest.util import _MAX_LENGTH
 from django.db import models
 from django.utils import timezone
 from apps.users.models import User
+from apps.files.models import File
 
 class Availability(models.Model):
     doctor = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -29,7 +30,7 @@ class Appointment(models.Model):
         choices=AppointmentStatus.choices,
         default=AppointmentStatus.BOOKED   
         )
-    attachment = models.TextField()
+    attachment = models.FilePathField(null=True, blank=True)
 
 class MedicineType(models.TextChoices):
     TABLET = 'TABLET', _('TABLET')
@@ -71,7 +72,6 @@ class FormAssessment(models.Model):
     doctor = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='formassessments',
         blank=True,
         null=True
         )
