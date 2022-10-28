@@ -59,7 +59,7 @@ class UserEmailVerification(models.Model):
         ordering = ['-created_at']
 
 class Pharmacy(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pharmacies')
     address = models.TextField()
     phone = models.CharField(
         max_length=15,

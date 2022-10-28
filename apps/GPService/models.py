@@ -8,34 +8,54 @@ from django.utils import timezone
 from apps.users.models import User
 from apps.files.models import File
 
-class Availability(models.Model):
-    doctor = models.ForeignKey(User, on_delete=models.CASCADE)
-    date = models.DateField(default=timezone.now)
-    starting_time = models.TimeField(default=timezone.now)
-    ending_time = models.TimeField(default=timezone.now)
-    is_booked = models.BooleanField(default=False)
-    doctor_charge = models.IntegerField(default=1000)
-
+# TextChoices
 class AppointmentStatus(models.TextChoices):
     BOOKED = 'BOOKED', _('BOOKED')
     ONGOING = 'ONGOING', _('ONGOING')
     COMPLETED = 'COMPLETED', _('COMPLETED')
     CANCELED = 'CANCELED', _('CANCELED')
 
-class Appointment(models.Model):
-    patient = models.ForeignKey(User, on_delete=models.CASCADE)
-    availability = models.ForeignKey(Availability, on_delete=models.CASCADE)
-    status = models.CharField(
-        max_length=15,
-        choices=AppointmentStatus.choices,
-        default=AppointmentStatus.BOOKED   
-        )
-    attachment = models.FilePathField(null=True, blank=True)
 
 class MedicineType(models.TextChoices):
     TABLET = 'TABLET', _('TABLET')
     CAPSULES = 'CAPSULES', _('CAPSULES')
     VACCINE = 'VACCINE', _('VACCINE')
+
+
+class Treatment(models.TextChoices):
+    CANCER = 'CANCER', _('CANCER')
+    ALLERGIES = 'ALLERGIES', _('ALLERGIES')
+
+
+class FormAssessmentType(models.TextChoices):
+    ONE_TIME_FORM = 'ONE_TIME_FORM', _('ONE_TIME_FORM')
+    SUBSCRIPTION_FORM = 'SUBSCRIPTION_FORM', _('SUBSCRIPTION_FORM')
+
+
+class OrderType(models.TextChoices):
+    FORM_ASSESSMENT = 'FORM_ASSESSMENT', _('FORM_ASSESSMENT')
+    VIDEO_ASSESSMENT = 'VIDEO_ASSESSMENT', _('VIDEO_ASSESSMENT')
+    PRESCRIPTION = 'PRESCRIPTION', _('PRESCRIPTION')
+
+
+#Models
+class Availability(models.Model):
+    doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='availabilities')
+    date = models.DateField(default=timezone.now)
+    starting_time = models.TimeField(default=timezone.now)
+    ending_time = models.TimeField(default=timezone.now)
+    is_booked = models.BooleanField(default=False)
+    doctor_charge = models.IntegerField(default=1000)
+
+class Appointment(models.Model):
+    patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments')
+    availability = models.ForeignKey(Availability, on_delete=models.CASCADE, related_name='appointments')
+    status = models.CharField(
+        max_length=15,
+        choices=AppointmentStatus.choices,
+        default=AppointmentStatus.BOOKED   
+        )
+    attachment = models.ForeignKey(File, null=True, blank=True)
 
 class Medicine(models.Model):
     name = models.CharField(max_length=200)
@@ -46,26 +66,18 @@ class Medicine(models.Model):
     available_quantity = models.IntegerField()
     price = models.DecimalField(max_digits=4, decimal_places=2)
 
-class AvailableTreatment(models.TextChoices):
-    CANCER = 'CANCER', _('CANCER')
-    ALLERGIES = 'ALLERGIES', _('ALLERGIES')
-
 class FormAssessmentQuestion(models.Model):
     treatment = models.CharField(
         max_length=100,
-        choices=AvailableTreatment.choices
+        choices=Treatment.choices
         )
-    question_title = models.CharField(max_length=200)
-
-class FormAssessmentType(models.TextChoices):
-    ONETIMEFORM = 'ONETIMEFORM', _('ONETIMEFORM')
-    SUBSCRIPTIONFORM = 'SUBSCRIPTIONFORM', _('SUBSCRIPTIONFORM')
+    question = models.CharField(max_length=200)
 
 class FormAssessment(models.Model):
     patient = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='formassessments',
+        related_name='patient_formassessments',
         blank=True,
         null=True
         )
@@ -73,7 +85,8 @@ class FormAssessment(models.Model):
         User,
         on_delete=models.CASCADE,
         blank=True,
-        null=True
+        null=True,
+        related_name='doctor_formassessments'
         )
     type = models.CharField(
         max_length=20,
@@ -84,36 +97,33 @@ choices=FormAssessmentType.choices
     assessed_date = models.DateTimeField(null=True)
 
 class FormAssessmentAnswer(models.Model):
-    form_assessment_question = models.ForeignKey(FormAssessmentQuestion, on_delete=models.CASCADE)
-    form_assessment = models.ForeignKey(FormAssessment, on_delete=models.CASCADE)
+    form_assessment_question = models.ForeignKey(FormAssessmentQuestion, on_delete=models.CASCADE, related_name='form_assessment_answers')
+    form_assessment = models.ForeignKey(FormAssessment, on_delete=models.CASCADE, related_name='form_assessment_answers')
     answer = models.TextField()
 
 class FormAssessmentFeedback(models.Model):
-    form_assessment = models.ForeignKey(FormAssessment, on_delete=models.CASCADE)
+    form_assessment = models.ForeignKey(FormAssessment, on_delete=models.CASCADE, related_name='form_assessment_feedback')
     provided_feedback = models.TextField()
     posted_date = models.DateField(timezone.now)
 
 class Prescription(models.Model):
-    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='prescriptions')
     prescribed_quantity = models.IntegerField()
     appointment = models.ForeignKey(
         Appointment,
         on_delete=models.CASCADE,
         blank=True,
-        null=True
+        null=True,
+        related_name='prescriptions'
         )
     form_assessment = models.ForeignKey(
         FormAssessment,
         on_delete=models.CASCADE,
         blank=True,
-        null=True
+        null=True,
+        related_name='prescriptions'
         )
     is_accepted = models.BooleanField(default=False)
-
-class OrderType(models.TextChoices):
-    FORMASSESSMENT = 'FORMASSESSMENT', _('FORMASSESSMENT')
-    VIDEOASSESSMENT = 'VIDEOASSESSMENT', _('VIDEOASSESSMENT')
-    PRESCRIPTION = 'PRESCRIPTION', _('PRESCRIPTION')
 
 class Order(models.Model):
     type = models.CharField(
@@ -121,19 +131,21 @@ class Order(models.Model):
         choices=OrderType.choices)
     appointment = models.ForeignKey(Appointment,
     on_delete=models.CASCADE,
-    null=True
+    null=True,
+    related_name='orders'
     )
     form_assessment = models.ForeignKey(FormAssessment,   
     on_delete=models.CASCADE,
-    null=True
+    null=True,
+    related_name='orders'
     )
     created_date = models.DateTimeField(timezone.now)
-total_amount = models.IntegerField(blank=True, null=True)
+    total_amount = models.IntegerField(blank=True, null=True)
 
 class Country(models.Model):
     name = models.CharField(max_length=50)
 
 class RecommendedVaccine(models.Model)    :
-    country = models.ForeignKey(Country, on_delete=models.CASCADE)
-    Medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
+    country = models.ForeignKey(Country, on_delete=models.CASCADE, related_name='recommended_vaccines')
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='recommended_vaccines')
     posted_date = models.DateTimeField(timezone.now)
