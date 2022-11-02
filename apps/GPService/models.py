@@ -55,7 +55,7 @@ class Appointment(models.Model):
         choices=AppointmentStatus.choices,
         default=AppointmentStatus.BOOKED   
         )
-    attachment = models.ForeignKey(File, null=True, blank=True)
+    attachment = models.ForeignKey(File, on_delete=models.CASCADE, null=True, blank=True)
 
 class Medicine(models.Model):
     name = models.CharField(max_length=200)
@@ -147,5 +147,5 @@ class Country(models.Model):
 
 class RecommendedVaccine(models.Model)    :
     country = models.ForeignKey(Country, on_delete=models.CASCADE, related_name='recommended_vaccines')
-    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='recommended_vaccines')
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, blank=True, null=True, related_name='recommended_vaccines')
     posted_date = models.DateTimeField(timezone.now)

@@ -12,7 +12,7 @@ from project import settings
 
 
 def create_user(validated_data):
-    validated_data.pop('confirm_password')
+    #validated_data.pop('confirm_password')
     validated_data['username'] = validated_data['email']
     instance = get_user_model().objects.create(**validated_data)
     instance.set_password(validated_data['password'])
@@ -25,13 +25,14 @@ class AuthRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password']
+        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role']
         extra_kwargs = {
             'id': {'read_only': True},
             'first_name': {'required': True},
             'last_name': {'required': True},
             'email': {'required': True},
             'password': {'write_only': True, 'min_length': 6},
+            'role': {'required': True},
         }
 
     def validate_confirm_password(self, val):
@@ -59,7 +60,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = [
-            'id', 'first_name', 'last_name', 'email', 'password', 'phone', 'role'
+            'id', 'first_name', 'last_name', 'email', 'password', 'role'
         ]
 
     def create(self, validated_data):
