@@ -1,4 +1,6 @@
 import datetime
+from datetime import date
+from django.core.validators import MinValueValidator
 from enum import unique
 from django.utils.translation import gettext_lazy as _
 from secrets import choice
@@ -41,11 +43,14 @@ class OrderType(models.TextChoices):
 #Models
 class Availability(models.Model):
     doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='availabilities')
-    date = models.DateField(default=timezone.now)
+    date = models.DateField(
+        default=timezone.now,
+        validators=[MinValueValidator(limit_value=date.today)]
+        )
     starting_time = models.TimeField(default=timezone.now)
     ending_time = models.TimeField(default=timezone.now)
     is_booked = models.BooleanField(default=False)
-    doctor_charge = models.IntegerField(default=1000)
+    doctor_charge = models.PositiveIntegerField(default=1000)
 
 class Appointment(models.Model):
     patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments')
