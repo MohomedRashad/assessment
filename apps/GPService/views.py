@@ -12,10 +12,19 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(doctor=self.request.user)
 
-    def destroy(self, request, *args, **kwargs):
-        availability = self.get_object()
-        if availability.is_booked == False:
-            availability.delete()
-            return Response(status=status.HTTP_200_OK)
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        if instance.is_booked == False:
+            serializer.save()
         else:
-            return Response("Unable to delete this availability instance")
+            return
+
+
+    def perform_destroy(self, instance):
+        availability = self.get_object()
+        if availability.doctor != self.request.user:
+            return
+        elif availability.is_booked == True:
+            return
+        else:
+            instance.delete()
