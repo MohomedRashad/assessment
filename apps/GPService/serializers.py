@@ -6,17 +6,9 @@ from rest_framework.response import Response
 class AvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Availability
-        fields = ('id', 'date', 'starting_time', 'ending_time', 'is_booked', 'doctor_charge')
-        extra_kwargs = {
-            'id': {'read_only': True},
-            'date': {'required': True},
-            'starting_time': {'required': True},
-            'ending_time': {'required': True},
-            'is_booked': {'required': True},
-            'doctor_charge': {'required': True},
-        }
+        exclude = ('doctor', 'is_booked')
 
     def validate(self, data):
-        if data['starting_time'] > data['ending_time']:
-            raise serializers.ValidationError("The starting time should not be greater than the ending time")
+        instance = Availability(**data)
+        instance.clean()
         return data

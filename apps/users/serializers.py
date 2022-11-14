@@ -12,7 +12,7 @@ from project import settings
 
 
 def create_user(validated_data):
-    #validated_data.pop('confirm_password')
+    validated_data.pop('confirm_password')
     validated_data['username'] = validated_data['email']
     instance = get_user_model().objects.create(**validated_data)
     instance.set_password(validated_data['password'])

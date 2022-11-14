@@ -11,15 +11,21 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
     queryset = Availability.objects.all()
     serializer_class = AvailabilitySerializer
 
+
     def perform_create(self, serializer):
         if Availability.objects.filter(
-            date=self.request.POST.get('date'),
-            starting_time=self.request.POST.get('starting_time'),
-            ending_time=self.request.POST.get('ending_time'),
+            date=serializer.validated_data['date'],
+            starting_time=serializer.validated_data['starting_time'],
+            ending_time=serializer.validated_data['ending_time'],
             doctor=self.request.user):
             raise ValidationError("This availability instance has already been added before")
+        elif not is_the_appointment_slot_exactly_15_minutes(
+            serializer.validated_data['starting_time'],
+            serializer.validated_data['ending_time']):
+            raise ValidationError("The duration of the availability slot should exactly be 15 minutes")
         else:
             serializer.save(doctor=self.request.user)
+
 
     def perform_update(self, serializer):
         availability = self.get_object()
@@ -30,8 +36,10 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
             starting_time=availability.starting_time,
             ending_time=availability.ending_time,
             doctor=self.request.user):
-            raise ValidationError("Unable to add as this availability instance has already been added before")
-        elif not is_the_appointment_slot_exactly_15_minutes(availability.starting_time, availability.ending_time):
+            raise ValidationError("This availability instance has already been added before")
+        elif not is_the_appointment_slot_exactly_15_minutes(
+            availability.starting_time,
+            availability.ending_time):
             raise ValidationError("The duration of the availability slot should exactly be 15 minutes")
         else:
             super().perform_update(serializer)

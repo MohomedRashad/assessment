@@ -9,6 +9,7 @@ from django.db import models
 from django.utils import timezone
 from apps.users.models import User
 from apps.files.models import File
+from rest_framework.exceptions import ValidationError
 
 # TextChoices
 class AppointmentStatus(models.TextChoices):
@@ -50,7 +51,11 @@ class Availability(models.Model):
     starting_time = models.TimeField(default=timezone.now)
     ending_time = models.TimeField(default=timezone.now)
     is_booked = models.BooleanField(default=False)
-    doctor_charge = models.PositiveIntegerField(default=1000)
+    doctor_charge = models.PositiveIntegerField(default=100)
+
+    def clean(self):
+        if self.starting_time > self.ending_time:
+            raise ValidationError("The starting time should not be less than the ending time")
 
 class Appointment(models.Model):
     patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments')
