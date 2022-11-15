@@ -5,7 +5,7 @@ from .serializers import AvailabilitySerializer
 from .models import Availability
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
-from apps.common.services import is_the_appointment_slot_exactly_15_minutes
+from .services import check_meeting_slot_time
 
 class AvailabilityViewSet(viewsets.ModelViewSet):
     queryset = Availability.objects.all()
@@ -14,12 +14,12 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         if Availability.objects.filter(
-            date=serializer.validated_data['date'],
-            starting_time=serializer.validated_data['starting_time'],
-            ending_time=serializer.validated_data['ending_time'],
+            date=self.request.data.get('date'),
+            starting_time=self.request.data.get('starting_time'),
+            ending_time=self.request.data.get('ending_time'),
             doctor=self.request.user):
             raise ValidationError("This availability instance has already been added before")
-        elif not is_the_appointment_slot_exactly_15_minutes(
+        elif not check_meeting_slot_time(
             serializer.validated_data['starting_time'],
             serializer.validated_data['ending_time']):
             raise ValidationError("The duration of the availability slot should exactly be 15 minutes")
@@ -37,7 +37,7 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
             ending_time=availability.ending_time,
             doctor=self.request.user):
             raise ValidationError("This availability instance has already been added before")
-        elif not is_the_appointment_slot_exactly_15_minutes(
+        elif not check_meeting_slot_time(
             availability.starting_time,
             availability.ending_time):
             raise ValidationError("The duration of the availability slot should exactly be 15 minutes")

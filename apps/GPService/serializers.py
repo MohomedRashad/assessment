@@ -7,8 +7,3 @@ class AvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Availability
         exclude = ('doctor', 'is_booked')
-
-    def validate(self, data):
-        instance = Availability(**data)
-        instance.clean()
-        return data
