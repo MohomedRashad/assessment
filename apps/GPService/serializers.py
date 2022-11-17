@@ -7,3 +7,4 @@ class AvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Availability
         exclude = ('doctor', 'is_booked')
+
