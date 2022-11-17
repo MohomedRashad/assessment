@@ -13,15 +13,17 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
 
 
     def perform_create(self, serializer):
+        starting_time = datetime.strptime(self.request.data.get('starting_time'), '%H:%M:%S')
+        ending_time = datetime.strptime(self.request.data.get('ending_time'), '%H:%M:%S')
         if Availability.objects.filter(
             date=self.request.data.get('date'),
             starting_time=self.request.data.get('starting_time'),
             ending_time=self.request.data.get('ending_time'),
-            doctor=self.request.user):
+            doctor=self.request.user).exists():
             raise ValidationError("This availability instance has already been added before")
         elif not check_meeting_slot_time(
-            serializer.validated_data['starting_time'],
-            serializer.validated_data['ending_time']):
+            starting_time.time(),
+            ending_time.time()):
             raise ValidationError("The duration of the availability slot should exactly be 15 minutes")
         else:
             serializer.save(doctor=self.request.user)
@@ -35,7 +37,7 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
             date=availability.date,
             starting_time=availability.starting_time,
             ending_time=availability.ending_time,
-            doctor=self.request.user):
+            doctor=self.request.user).exists():
             raise ValidationError("This availability instance has already been added before")
         elif not check_meeting_slot_time(
             availability.starting_time,

@@ -48,10 +48,18 @@ class Availability(models.Model):
         default=timezone.now,
         validators=[MinValueValidator(limit_value=date.today)]
         )
-    starting_time = models.TimeField(default=timezone.now)
-    ending_time = models.TimeField(default=timezone.now)
+    starting_time = models.TimeField()
+    ending_time = models.TimeField()
     is_booked = models.BooleanField(default=False)
     doctor_charge = models.PositiveIntegerField(default=100)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['starting_time', 'ending_time', 'doctor'],
+                name = 'unique_appointment_slot'
+            )
+        ]
 
     def clean(self):
         if self.starting_time > self.ending_time:
