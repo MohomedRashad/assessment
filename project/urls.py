@@ -26,13 +26,14 @@ from rest_framework.routers import DefaultRouter
 
 from apps.files.views import FileViewSet
 from apps.users.views import AuthViewSet, UserViewSet
-from apps.GPService.views import AvailabilityViewSet
+from apps.GPService.views import AvailabilityViewSet, AppointmentViewSet
 
 router = DefaultRouter()
 router.register('auth', AuthViewSet, basename='auth')
 router.register('users', UserViewSet, basename='users')
 router.register('files', FileViewSet, basename='files')
 router.register('availabilities', AvailabilityViewSet, basename='availabilities')
+router.register('appointments', AppointmentViewSet, basename='appointments')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

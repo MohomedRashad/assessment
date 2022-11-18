@@ -76,6 +76,13 @@ class Appointment(models.Model):
         default=AppointmentStatus.BOOKED   
         )
     attachment = models.ForeignKey(File, on_delete=models.CASCADE, null=True, blank=True)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['patient', 'availability'],
+                name = 'unique_appointment'
+            )
+                    ]
 
 class Medicine(models.Model):
     name = models.CharField(max_length=200)
