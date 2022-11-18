@@ -48,14 +48,24 @@ class Availability(models.Model):
         default=timezone.now,
         validators=[MinValueValidator(limit_value=date.today)]
         )
-    starting_time = models.TimeField(default=timezone.now)
-    ending_time = models.TimeField(default=timezone.now)
+    starting_time = models.TimeField()
+    ending_time = models.TimeField()
     is_booked = models.BooleanField(default=False)
     doctor_charge = models.PositiveIntegerField(default=100)
 
-    def clean(self):
-        if self.starting_time > self.ending_time:
-            raise ValidationError("The starting time should not be less than the ending time")
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['starting_time', 'ending_time', 'doctor'],
+                name = 'unique_appointment_slot'
+            )
+                    ]
+
+    def save(self, *args, **kwargs):
+        if  self.ending_time < self.starting_time:
+            raise ValidationError("The ending time should not be less than the starting time")
+        else:
+                            super().save(*args, **kwargs)
 
 class Appointment(models.Model):
     patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments')
