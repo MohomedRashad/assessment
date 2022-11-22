@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from .models import Availability, Appointment
-from rest_framework.response import Response
 
 class AvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,3 +12,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         exclude = ('patient', 'status')
 
+    def update(self, instance, validated_data):
+                    instance.status = validated_data.get('status')
+                    instance.save()
+                    return instance
