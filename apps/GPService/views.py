@@ -64,7 +64,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         status = self.request.query_params.get('status')
-        current_user = User.objects.get(id=self.request.user.id)
+        current_user = self.request.user
         if status is not None:
             queryset = current_user.appointments.all()
             queryset = queryset.filter(status=status)
@@ -92,7 +92,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         if appointment.status == 'COMPLETED':
             raise ValidationError("This appointment cannot be modified as it has already been completed")
         else:
-            serializer.save(status=self.request.data.get('status'))
+            serializer.save(status=self.request.data.get('status'), partial=True)
 
     @transaction.atomic
     def perform_destroy(self, serializer):

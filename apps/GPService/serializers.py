@@ -8,11 +8,8 @@ class AvailabilitySerializer(serializers.ModelSerializer):
         exclude = ('doctor', 'is_booked')
 
 class AppointmentSerializer(serializers.ModelSerializer):
+    availability = AvailabilitySerializer(read_only=True)
     class Meta:
         model = Appointment
-        exclude = ('patient', 'status')
+        exclude = ('patient',)
 
-    def update(self, instance, validated_data):
-                    instance.status = validated_data.get('status')
-                    instance.save()
-                    return instance
