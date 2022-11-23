@@ -13,3 +13,13 @@ class AppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         exclude = ('patient',)
 
+class AddAppointmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Appointment
+        exclude = ('patient', 'status',)
+
+class UpbateAppointmentStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Appointment
+        fields = ['status']
+

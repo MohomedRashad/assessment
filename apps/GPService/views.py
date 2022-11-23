@@ -2,8 +2,7 @@ from rest_framework import viewsets
 from django.http import Http404
 from rest_framework import status
 from .models import Availability, Appointment
-from apps.users.models import User
-from .serializers import AvailabilitySerializer, AppointmentSerializer
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpbateAppointmentStatusSerializer
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
 from .services import check_meeting_slot_time
@@ -60,16 +59,22 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
             super().perform_destroy(instance)
 
 class AppointmentViewSet(viewsets.ModelViewSet):
-    serializer_class = AppointmentSerializer
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return AppointmentSerializer
+        elif self.action == 'retrieve':
+            return AppointmentSerializer
+        elif self.action == 'create':
+            return AddAppointmentSerializer
+        else:
+            return UpbateAppointmentStatusSerializer
+        
 
     def get_queryset(self):
         status = self.request.query_params.get('status')
-        current_user = self.request.user
+        queryset = self.request.user.appointments.all()
         if status is not None:
-            queryset = current_user.appointments.all()
             queryset = queryset.filter(status=status)
-        else:
-            queryset = current_user.appointments.all()
         return queryset
 
     @transaction.atomic
@@ -91,8 +96,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         appointment = self.get_object()
         if appointment.status == 'COMPLETED':
             raise ValidationError("This appointment cannot be modified as it has already been completed")
+        elif not 'status' in self.request.data.keys():
+            raise ValidationError("The status has not been provided")
         else:
-            serializer.save(status=self.request.data.get('status'), partial=True)
+            super().perform_update(serializer)
 
     @transaction.atomic
     def perform_destroy(self, serializer):
@@ -111,5 +118,4 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             availability.is_booked = False
             availability.save()
                 #Setting the appointment status to 'CANCELED'
-            serializer.status = 'CANCELED'
-            serializer.save()
+            serializer.save(status='CANCELED')
