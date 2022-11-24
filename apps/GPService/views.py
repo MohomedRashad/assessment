@@ -2,7 +2,7 @@ from rest_framework import viewsets
 from django.http import Http404
 from rest_framework import status
 from .models import Availability, Appointment
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpbateAppointmentStatusSerializer
+from .serializers import AvailabilitySerializer, AppointmentSerializer, UpbateAppointmentStatusSerializer
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
 from .services import check_meeting_slot_time
@@ -33,6 +33,7 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         availability = self.get_object()
+        raise ValidationError(availability.is_booked)
         if availability.is_booked:
             raise ValidationError("This availability instance cannot be modified as it has already been booked before")            
         elif Availability.objects.filter(
@@ -60,12 +61,8 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
 
 class AppointmentViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
-        if self.action == 'list':
+        if self.action == 'list' or self.action == 'retrieve' or self.action == 'create':
             return AppointmentSerializer
-        elif self.action == 'retrieve':
-            return AppointmentSerializer
-        elif self.action == 'create':
-            return AddAppointmentSerializer
         else:
             return UpbateAppointmentStatusSerializer
         
@@ -80,7 +77,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def perform_create(self, serializer):
         availability = get_object_or_404(
-            Availability, id = self.request.data.get('availability'))
+            Availability, id = self.request.data.get('availability_id'))
         if Appointment.objects.filter(
             patient=self.request.user,
             availability=self.request.data.get('availability')).exists():
@@ -96,7 +93,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         appointment = self.get_object()
         if appointment.status == 'COMPLETED':
             raise ValidationError("This appointment cannot be modified as it has already been completed")
-        elif not 'status' in self.request.data.keys():
+        elif not 'status' in self.request.data:
             raise ValidationError("The status has not been provided")
         else:
             super().perform_update(serializer)
@@ -114,8 +111,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         else:
             #Updating the availability status to not booked.
             availability = get_object_or_404(
-                Availability, id = self.request.data.get('availability'))
+                Availability, id = appointment.availability.id)
             availability.is_booked = False
             availability.save()
                 #Setting the appointment status to 'CANCELED'
-            serializer.save(status='CANCELED')
+            serializer.status = 'CANCELED'
+            serializer.save()
