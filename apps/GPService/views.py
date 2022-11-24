@@ -2,7 +2,7 @@ from rest_framework import viewsets
 from django.http import Http404
 from rest_framework import status
 from .models import Availability, Appointment
-from .serializers import AvailabilitySerializer, AppointmentSerializer, UpbateAppointmentStatusSerializer
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpbateAppointmentStatusSerializer
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
 from .services import check_meeting_slot_time
@@ -61,8 +61,10 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
 
 class AppointmentViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
-        if self.action == 'list' or self.action == 'retrieve' or self.action == 'create':
+        if self.action == 'list' or self.action == 'retrieve':
             return AppointmentSerializer
+        elif self.action == 'create':
+            return AddAppointmentSerializer
         else:
             return UpbateAppointmentStatusSerializer
         
@@ -77,7 +79,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def perform_create(self, serializer):
         availability = get_object_or_404(
-            Availability, id = self.request.data.get('availability_id'))
+            Availability, id = self.request.data.get('availability'))
         if Appointment.objects.filter(
             patient=self.request.user,
             availability=self.request.data.get('availability')).exists():
