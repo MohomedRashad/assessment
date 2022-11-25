@@ -60,21 +60,22 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
             super().perform_destroy(instance)
 
 class AppointmentViewSet(viewsets.ModelViewSet):
+    queryset = Appointment.objects.all()
+    serializer_class = AppointmentSerializer
     def get_serializer_class(self):
-        if self.action == 'list' or self.action == 'retrieve':
-            return AppointmentSerializer
+        if self.action == 'update' or self.action == 'destroy':
+            return UpbateAppointmentStatusSerializer
         elif self.action == 'create':
             return AddAppointmentSerializer
-        else:
-            return UpbateAppointmentStatusSerializer
-        
+        return super(AppointmentViewSet, self).get_serializer_class()
 
     def get_queryset(self):
         status = self.request.query_params.get('status')
-        queryset = self.request.user.appointments.all()
         if status is not None:
-            queryset = queryset.filter(status=status)
-        return queryset
+            self.queryset.filter(status=status, patient=self.request.user)
+        else:
+            self.queryset.filter(patient=self.request.user)
+        return self.queryset
 
     @transaction.atomic
     def perform_create(self, serializer):
