@@ -7,6 +7,7 @@ from secrets import choice
 from unittest.util import _MAX_LENGTH
 from django.db import models
 from django.utils import timezone
+from django.db.models import Q
 from apps.users.models import User
 from apps.files.models import File
 from rest_framework.exceptions import ValidationError
@@ -79,7 +80,8 @@ class Appointment(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['patient', 'availability'],
+                fields = ['patient', 'availability'],
+                condition = ~Q(status='CANCELED'),
                 name = 'unique_appointment'
             )
                     ]

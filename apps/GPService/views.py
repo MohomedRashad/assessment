@@ -83,7 +83,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             Availability, id = self.request.data.get('availability'))
         if Appointment.objects.filter(
             patient=self.request.user,
-            availability=self.request.data.get('availability')).exists():
+            availability=self.request.data.get('availability')).exclude(
+            status='CANCELED').exists():
             raise ValidationError("This appointment has already been added before")
         else:
             #Adding the appointment
