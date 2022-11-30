@@ -1,8 +1,8 @@
 from rest_framework import viewsets
 from django.http import Http404
 from rest_framework import status
-from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpbateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, AddFormAssessmentSerializer, ViewFormAssessmentSerializer, UpdateFormAssessmentSerializer
+from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpbateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, AddFormAssessmentSerializer, ViewFormAssessmentSerializer, UpdateFormAssessmentSerializer, FormAssessmentAnswerSerializer
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
 from .services import check_meeting_slot_time
@@ -150,3 +150,8 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
         form_assessment.is_assessed = True
         form_assessment.assessed_date = datetime.today()
         form_assessment.save()
+
+class FormAssessmentAnswerViewSet(viewsets.ModelViewSet):
+    queryset = FormAssessmentAnswer.objects.all()
+    serializer_class = FormAssessmentAnswerSerializer
+
