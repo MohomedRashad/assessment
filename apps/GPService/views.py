@@ -1,8 +1,8 @@
 from rest_framework import viewsets
 from django.http import Http404
 from rest_framework import status
-from .models import Availability, Appointment, FormAssessmentQuestion
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpbateAppointmentStatusSerializer, FormAssessmentQuestionSerializer
+from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpbateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, AddFormAssessmentSerializer, ViewFormAssessmentSerializer, UpdateFormAssessmentSerializer
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
 from .services import check_meeting_slot_time
@@ -33,7 +33,6 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         availability = self.get_object()
-        raise ValidationError(availability.is_booked)
         if availability.is_booked:
             raise ValidationError("This availability instance cannot be modified as it has already been booked before")            
         elif Availability.objects.filter(
@@ -119,3 +118,35 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 class FormAssessmentQuestionViewSet(viewsets.ModelViewSet):
     queryset = FormAssessmentQuestion.objects.all()
     serializer_class = FormAssessmentQuestionSerializer
+
+class FormAssessmentViewSet(viewsets.ModelViewSet):
+    queryset = FormAssessment.objects.all()
+    serializer_class = ViewFormAssessmentSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return AddFormAssessmentSerializer
+        elif self.action == 'update':
+                        return UpdateFormAssessmentSerializer
+        return super(FormAssessmentViewSet, self).get_serializer_class()
+
+    def get_queryset(self):
+        status = self.request.query_params.get('status')
+        if status is not None:
+            self.queryset.filter(status=status, patient=self.request.user)
+        else:
+            self.queryset.filter(patient=self.request.user)
+        return self.queryset
+
+    def perform_create(self, serializer):
+            serializer.save(patient=self.request.user)
+
+    def perform_update(self, serializer):
+        #assumption: only the doctor user type can invoke the modification of a form assessment
+        #The patient cannot update the form once created
+        #A form assessment will only be updated when a doctor performs an assessment of an existing form.
+        form_assessment = get_object_or_404(FormAssessment, id = self.kwargs.get('pk'))
+        form_assessment.doctor = self.request.user
+        form_assessment.is_assessed = True
+        form_assessment.assessed_date = datetime.today()
+        form_assessment.save()
