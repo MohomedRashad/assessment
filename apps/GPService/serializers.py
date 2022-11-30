@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer
+from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback
 
 class AvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,3 +47,8 @@ class FormAssessmentAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = FormAssessmentAnswer
         fields = '__all__'
+
+class FormAssessmentFeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FormAssessmentFeedback
+        exclude = ('posted_date',)

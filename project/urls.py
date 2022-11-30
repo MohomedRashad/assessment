@@ -26,7 +26,7 @@ from rest_framework.routers import DefaultRouter
 
 from apps.files.views import FileViewSet
 from apps.users.views import AuthViewSet, UserViewSet
-from apps.GPService.views import AvailabilityViewSet, AppointmentViewSet, FormAssessmentQuestionViewSet, FormAssessmentViewSet, FormAssessmentAnswerViewSet
+from apps.GPService.views import AvailabilityViewSet, AppointmentViewSet, FormAssessmentQuestionViewSet, FormAssessmentViewSet, FormAssessmentAnswerViewSet, FormAssessmentFeedbackViewSet
 
 router = DefaultRouter()
 router.register('auth', AuthViewSet, basename='auth')
@@ -37,6 +37,7 @@ router.register('appointments', AppointmentViewSet, basename='appointments')
 router.register('formassessmentquestions', FormAssessmentQuestionViewSet, basename='formassessmentquestions')
 router.register('formassessments', FormAssessmentViewSet, basename='formassessments')
 router.register('formassessmentanswers', FormAssessmentAnswerViewSet, basename='formassessmentanswers')
+router.register('formassessmentfeedbacks', FormAssessmentFeedbackViewSet, basename='formassessmentfeedbacks')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

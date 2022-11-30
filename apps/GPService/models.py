@@ -133,7 +133,7 @@ class FormAssessmentAnswer(models.Model):
 class FormAssessmentFeedback(models.Model):
     form_assessment = models.ForeignKey(FormAssessment, on_delete=models.CASCADE, related_name='form_assessment_feedback')
     provided_feedback = models.TextField()
-    posted_date = models.DateField(timezone.now)
+    posted_date = models.DateTimeField(auto_now_add=True)
 
 class Prescription(models.Model):
     medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='prescriptions')
