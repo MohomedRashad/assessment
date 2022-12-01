@@ -33,7 +33,6 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         availability = self.get_object()
-        raise ValidationError(availability.is_booked)
         if availability.is_booked:
             raise ValidationError("This availability instance cannot be modified as it has already been booked before")            
         elif Availability.objects.filter(
