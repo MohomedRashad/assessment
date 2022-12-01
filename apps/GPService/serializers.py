@@ -21,5 +21,5 @@ class AddAppointmentSerializer(serializers.ModelSerializer):
 class UpbateAppointmentStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appointment
-        fields = ['status']
+        fields = ['id', 'status']
 

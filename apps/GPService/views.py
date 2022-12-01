@@ -97,10 +97,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def perform_update(self, serializer):
         appointment = self.get_object()
-        if appointment.status == 'COMPLETED':
-            raise ValidationError("This appointment cannot be modified as it has already been completed")
-        elif not 'status' in self.request.data:
+        if not 'status' in self.request.data:
             raise ValidationError("The status has not been provided")
+        elif appointment.status == 'COMPLETED':
+            raise ValidationError("This appointment cannot be modified as it has already been completed")
         elif self.request.data['status'] == 'CANCELED':
             #An appointment can be deleted only if the current status is set to 'BOOKED'
             if appointment.status == 'ONGOING':
@@ -112,8 +112,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     availability.is_booked = False
                     availability.save()
                         #Setting the appointment status to 'CANCELED'
-                    serializer.status = 'CANCELED'
-                    serializer.save()
+                    super().perform_update(serializer)
         else:
             super().perform_update(serializer)
 
