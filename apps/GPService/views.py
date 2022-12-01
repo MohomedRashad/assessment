@@ -33,7 +33,6 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         availability = self.get_object()
-        raise ValidationError(availability.is_booked)
         if availability.is_booked:
             raise ValidationError("This availability instance cannot be modified as it has already been booked before")            
         elif Availability.objects.filter(
@@ -111,8 +110,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     availability.is_booked = False
                     availability.save()
                         #Setting the appointment status to 'CANCELED'
-                    serializer.status = 'CANCELED'
-                    serializer.save()
+                    super().perform_update(serializer)
         else:
             super().perform_update(serializer)
 
