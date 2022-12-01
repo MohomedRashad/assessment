@@ -1,8 +1,8 @@
 from rest_framework import viewsets
 from django.http import Http404
 from rest_framework import status
-from .models import Availability, Appointment
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpbateAppointmentStatusSerializer
+from .models import Availability, Appointment, Prescription
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpbateAppointmentStatusSerializer, PrescriptionSerializer
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
 from .services import check_meeting_slot_time
@@ -117,3 +117,6 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         else:
             super().perform_update(serializer)
 
+class PrescriptionViewSet(viewsets.ModelViewSet):
+    queryset = Prescription.objects.all()
+    serializer_class = PrescriptionSerializer
