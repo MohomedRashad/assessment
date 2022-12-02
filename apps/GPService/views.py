@@ -120,6 +120,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 class FormAssessmentQuestionViewSet(viewsets.ModelViewSet):
     queryset = FormAssessmentQuestion.objects.all()
     serializer_class = FormAssessmentQuestionSerializer
+    http_method_names = ['get',]
 
 class FormAssessmentViewSet(viewsets.ModelViewSet):
     queryset = FormAssessment.objects.all()

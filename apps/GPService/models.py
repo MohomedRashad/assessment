@@ -102,6 +102,9 @@ class FormAssessmentQuestion(models.Model):
         )
     question = models.CharField(max_length=200)
 
+    def __str__(self):
+        return self.question
+
 class FormAssessment(models.Model):
     patient = models.ForeignKey(
         User,

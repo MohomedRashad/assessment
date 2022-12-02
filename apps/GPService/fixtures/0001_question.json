@@ -1,0 +1,42 @@
+[
+{
+    "model": "GPService.FormAssessmentQuestion",
+    "pk": 1,
+    "fields": {
+        "treatment": "ALLERGIES",
+        "question": "Question1"
+    }
+},
+{
+    "model": "GPService.FormAssessmentQuestion",
+    "pk": 1,
+    "fields": {
+        "treatment": "ALLERGIES",
+        "question": "Question2"
+    }
+},
+{
+    "model": "GPService.FormAssessmentQuestion",
+    "pk": 1,
+    "fields": {
+        "treatment": "ALLERGIES",
+        "question": "Question3"
+    }
+},
+{
+    "model": "GPService.FormAssessmentQuestion",
+    "pk": 1,
+    "fields": {
+        "treatment": "ALLERGIES",
+        "question": "Question4"
+    }
+},
+{
+    "model": "GPService.FormAssessmentQuestion",
+    "pk": 1,
+    "fields": {
+        "treatment": "ALLERGIES",
+        "question": "Question5"
+    }
+}
+]
