@@ -8,6 +8,7 @@ from rest_framework.exceptions import ValidationError
 from .services import check_meeting_slot_time
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from rest_framework.response import Response
 
 class AvailabilityViewSet(viewsets.ModelViewSet):
     queryset = Availability.objects.all()
@@ -117,10 +118,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         else:
             super().perform_update(serializer)
 
-class FormAssessmentQuestionViewSet(viewsets.ModelViewSet):
-    queryset = FormAssessmentQuestion.objects.all()
-    serializer_class = FormAssessmentQuestionSerializer
-    http_method_names = ['get',]
+class FormAssessmentQuestionViewSet(viewsets.ViewSet):
+    def list(self, request):
+        queryset = FormAssessmentQuestion.objects.all()
+        serializer = FormAssessmentQuestionSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class FormAssessmentViewSet(viewsets.ModelViewSet):
     queryset = FormAssessment.objects.all()
