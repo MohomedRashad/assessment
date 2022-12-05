@@ -19,7 +19,6 @@ class AppointmentStatus(models.TextChoices):
     COMPLETED = 'COMPLETED', _('COMPLETED')
     CANCELED = 'CANCELED', _('CANCELED')
 
-
 class MedicineType(models.TextChoices):
     TABLET = 'TABLET', _('TABLET')
     CAPSULES = 'CAPSULES', _('CAPSULES')
@@ -87,13 +86,13 @@ class Appointment(models.Model):
                     ]
 
 class Medicine(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
     type = models.CharField(
         max_length=50,
         choices=MedicineType.choices,
         )
-    available_quantity = models.IntegerField()
-    price = models.DecimalField(max_digits=4, decimal_places=2)
+    available_quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=6, decimal_places=2, validators=[MinValueValidator(1)])
 
 class FormAssessmentQuestion(models.Model):
     treatment = models.CharField(

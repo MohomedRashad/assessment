@@ -1,8 +1,8 @@
 from rest_framework import viewsets
 from django.http import Http404
 from rest_framework import status
-from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpbateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, AddFormAssessmentSerializer, ViewFormAssessmentSerializer, UpdateFormAssessmentSerializer, FormAssessmentAnswerSerializer, FormAssessmentFeedbackSerializer
+from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, AddFormAssessmentSerializer, ViewFormAssessmentSerializer, UpdateFormAssessmentSerializer, FormAssessmentAnswerSerializer, FormAssessmentFeedbackSerializer, MedicineSerializer
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
 from .services import check_meeting_slot_time
@@ -66,7 +66,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     serializer_class = AppointmentSerializer
     def get_serializer_class(self):
         if self.action == 'update' or self.action == 'destroy':
-            return UpbateAppointmentStatusSerializer
+            return UpdateAppointmentStatusSerializer
         elif self.action == 'create':
             return AddAppointmentSerializer
         return super(AppointmentViewSet, self).get_serializer_class()
@@ -98,10 +98,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def perform_update(self, serializer):
         appointment = self.get_object()
-        if appointment.status == 'COMPLETED':
-            raise ValidationError("This appointment cannot be modified as it has already been completed")
-        elif not 'status' in self.request.data:
+        if not 'status' in self.request.data:
             raise ValidationError("The status has not been provided")
+        elif appointment.status == 'COMPLETED':
+            raise ValidationError("This appointment cannot be modified as it has already been completed")
         elif self.request.data['status'] == 'CANCELED':
             #An appointment can be deleted only if the current status is set to 'BOOKED'
             if appointment.status == 'ONGOING':
@@ -113,8 +113,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     availability.is_booked = False
                     availability.save()
                         #Setting the appointment status to 'CANCELED'
-                    serializer.status = 'CANCELED'
-                    serializer.save()
+                    super().perform_update(serializer)
         else:
             super().perform_update(serializer)
 
@@ -156,11 +155,6 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
         form_assessment.assessed_date = datetime.today()
         form_assessment.save()
 
-class FormAssessmentAnswerViewSet(viewsets.ModelViewSet):
-    queryset = FormAssessmentAnswer.objects.all()
-    serializer_class = FormAssessmentAnswerSerializer
-
-class FormAssessmentFeedbackViewSet(viewsets.ModelViewSet):
-    queryset = FormAssessmentFeedback.objects.all()
-    serializer_class = FormAssessmentFeedbackSerializer
-
+class MedicineViewSet(viewsets.ModelViewSet):
+    queryset = Medicine.objects.all()
+    serializer_class = MedicineSerializer
