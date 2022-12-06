@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine
+from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Treatment
 
 class AvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,7 +28,13 @@ class MedicineSerializer(serializers.ModelSerializer):
         model = Medicine
         fields = '__all__'
 
+class TreatmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Treatment
+        fields = '__all__'
+
 class FormAssessmentQuestionSerializer(serializers.ModelSerializer):
+    treatments = TreatmentSerializer(read_only=True, many=True)
     class Meta:
         model = FormAssessmentQuestion
         fields = '__all__'
