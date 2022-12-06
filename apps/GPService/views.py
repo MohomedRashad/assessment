@@ -117,44 +117,19 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         else:
             super().perform_update(serializer)
 
+class MedicineViewSet(viewsets.ModelViewSet):
+    queryset = Medicine.objects.all()
+    serializer_class = MedicineSerializer
+
 class FormAssessmentQuestionViewSet(viewsets.ViewSet):
     def list(self, request):
+        treatment = self.request.query_params.get('treatment')
         queryset = FormAssessmentQuestion.objects.all()
+        if treatment is not None:
+            queryset = queryset.filter(treatments__name__startswith=treatment)
         serializer = FormAssessmentQuestionSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class FormAssessmentViewSet(viewsets.ModelViewSet):
     queryset = FormAssessment.objects.all()
     serializer_class = ViewFormAssessmentSerializer
-
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return AddFormAssessmentSerializer
-        elif self.action == 'update':
-                        return UpdateFormAssessmentSerializer
-        return super(FormAssessmentViewSet, self).get_serializer_class()
-
-    def get_queryset(self):
-        status = self.request.query_params.get('status')
-        if status is not None:
-            self.queryset.filter(status=status, patient=self.request.user)
-        else:
-            self.queryset.filter(patient=self.request.user)
-        return self.queryset
-
-    def perform_create(self, serializer):
-            serializer.save(patient=self.request.user)
-
-    def perform_update(self, serializer):
-        #assumption: only the doctor user type can invoke the modification of a form assessment
-        #The patient cannot update the form once created
-        #A form assessment will only be updated when a doctor performs an assessment of an existing form.
-        form_assessment = get_object_or_404(FormAssessment, id = self.kwargs.get('pk'))
-        form_assessment.doctor = self.request.user
-        form_assessment.is_assessed = True
-        form_assessment.assessed_date = datetime.today()
-        form_assessment.save()
-
-class MedicineViewSet(viewsets.ModelViewSet):
-    queryset = Medicine.objects.all()
-    serializer_class = MedicineSerializer

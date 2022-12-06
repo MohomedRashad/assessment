@@ -31,7 +31,7 @@ class MedicineSerializer(serializers.ModelSerializer):
 class TreatmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Treatment
-        fields = '__all__'
+        fields = ['name']
 
 class FormAssessmentQuestionSerializer(serializers.ModelSerializer):
     treatments = TreatmentSerializer(read_only=True, many=True)
