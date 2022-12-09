@@ -127,10 +127,20 @@ class FormAssessmentAnswer(models.Model):
     form_assessment = models.ForeignKey(FormAssessment, on_delete=models.CASCADE, related_name='form_assessment_answers')
     answer = models.TextField()
 
+    def __str__(self):
+        return self.question
+
 class FormAssessmentFeedback(models.Model):
-    form_assessment = models.ForeignKey(FormAssessment, on_delete=models.CASCADE, related_name='form_assessment_feedback')
-    provided_feedback = models.TextField()
+    form_assessment = models.ForeignKey(
+        FormAssessment,
+        on_delete=models.CASCADE,
+        related_name='form_assessment_feedback'
+        )
+    provided_feedback = models.CharField(max_length=500)
     posted_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.provided_feedback
 
 class Prescription(models.Model):
     medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='prescriptions')

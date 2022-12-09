@@ -37,11 +37,11 @@ router.register('appointments', AppointmentViewSet, basename='appointments')
 router.register('formassessmentquestions', FormAssessmentQuestionViewSet, basename='formassessmentquestions')
 router.register('formassessments', FormAssessmentViewSet, basename='formassessments')
 router.register('medicines', MedicineViewSet, basename='medicines')
+router.register(r'formassessments', FormAssessmentViewSet, basename='formassessments')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
-
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
