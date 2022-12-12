@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from .models import Availability, Appointment, Medicine
+from .models import Availability, Appointment, Medicine, Country, RecommendedVaccine
 
 class AvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,5 +26,22 @@ class UpbateAppointmentStatusSerializer(serializers.ModelSerializer):
 class MedicineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medicine
+        fields = '__all__'
+
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Country
+        fields = '__all__'
+
+class ViewRecommendedVaccineSerializer(serializers.ModelSerializer):
+    country = CountrySerializer()
+    medicine = MedicineSerializer()
+    class Meta:
+        model = RecommendedVaccine
+        fields = '__all__'
+
+class AddRecommendedVaccineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecommendedVaccine
         fields = '__all__'
 
