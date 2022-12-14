@@ -128,7 +128,7 @@ class FormAssessmentAnswer(models.Model):
     answer = models.TextField()
 
     def __str__(self):
-        return self.question
+        return self.answer
 
 class FormAssessmentFeedback(models.Model):
     form_assessment = models.ForeignKey(

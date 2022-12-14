@@ -44,15 +44,20 @@ class ViewFormAssessmentSerializer(serializers.ModelSerializer):
         model = FormAssessment
         exclude = ('patient',)
 
-class FormAssessmentAnswerSerializer(serializers.ModelSerializer):
+class ViewFormAssessmentAnswerSerializer(serializers.ModelSerializer):
     form_assessment = ViewFormAssessmentSerializer(read_only=True)
     form_assessment_question = FormAssessmentQuestionSerializer(read_only=True)
     class Meta:
         model = FormAssessmentAnswer
         fields = '__all__'
 
+class AddFormAssessmentAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FormAssessmentAnswer
+        fields = '__all__'
+
 class FormAssessmentFeedbackSerializer(serializers.ModelSerializer):
-    form_assessment = ViewFormAssessmentSerializer(read_only=True)
+    form_assessment = ViewFormAssessmentSerializer()
     class Meta:
         model = FormAssessmentFeedback
         fields = '__all__'
