@@ -232,7 +232,7 @@ class FormAssessmentViewSet(viewsets.ViewSet):
                         serializer.save()
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-feedbacks/P<form_assessment_feedback_id>')
+    @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-feedbacks/(?P<form_assessment_feedback_id>\d+)')
     def update_form_assessment_feedback(self, request, form_assessment_id, form_assessment_feedback_id):
         form_assessment = get_object_or_404(FormAssessment, pk = form_assessment_id)
         if not 'provided_feedback' in self.request.data:
@@ -244,5 +244,5 @@ class FormAssessmentViewSet(viewsets.ViewSet):
             form_assessment_feedback = get_object_or_404(FormAssessmentFeedback, pk = form_assessment_feedback_id)
             form_assessment_feedback.provided_feedback = self.request.data.get('provided_feedback')
             form_assessment_feedback.save()
-            serializer = FormAssessmentFeedbackSerializer(data = form_assessment_feedback)
+            serializer = FormAssessmentFeedbackSerializer(form_assessment_feedback)
             return Response(serializer.data, status=status.HTTP_200_OK)
