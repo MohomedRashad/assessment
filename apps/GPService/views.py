@@ -10,7 +10,7 @@ from django.db import transaction
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, FormAssessmentFeedbackSerializer, MedicineSerializer, AddFormAssessmentAnswerSerializer
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentFeedbackSerializer, MedicineSerializer, AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer
 
 class AvailabilityViewSet(viewsets.ModelViewSet):
     queryset = Availability.objects.all()
@@ -66,6 +66,7 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
 class AppointmentViewSet(viewsets.ModelViewSet):
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
+
     def get_serializer_class(self):
         if self.action == 'update' or self.action == 'destroy':
             return UpdateAppointmentStatusSerializer
@@ -135,21 +136,22 @@ class FormAssessmentQuestionViewSet(viewsets.ViewSet):
 class FormAssessmentViewSet(viewsets.ViewSet):
     def list(self, request):
         #Returns a list of form assessments of the current patient
-        type = self.request.query_params.get('type')
+        form_assessment_type = self.request.query_params.get('type')
         queryset = FormAssessment.objects.all()
-        if type is not None:
-            queryset.filter(type=type, patient=self.request.user)
+        if form_assessment_type is not None:
+            queryset.filter(type=form_assessment_type, patient=self.request.user)
         else:
             queryset.filter(patient=self.request.user)
-        serializer = ViewFormAssessmentSerializer(queryset, many=True)
+        serializer = ViewAllFormAssessmentSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
         #Returns the detail view of a form assessment based on the given id
-        queryset = FormAssessmentAnswer.objects.filter(form_assessment = pk)
-        serializer = ViewFormAssessmentAnswerSerializer(queryset, many=True)
+        form_assessment = get_object_or_404(FormAssessment, id = pk)
+        serializer = ViewFormAssessmentSerializer(form_assessment)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @transaction.atomic
     @action(methods=['post'], detail=False, url_path='form-assessment-answers')
     def create_form_assessment(self, request):
         if not 'type' in self.request.data:
@@ -161,21 +163,27 @@ class FormAssessmentViewSet(viewsets.ViewSet):
             for current_answer in request.data['answers']:
                 form_assessment_question = get_object_or_404(FormAssessmentQuestion, id = current_answer['question'])
             #creating a form assessment instance
-            form_assessment = FormAssessment(patient=self.request.user, type=self.request.data.get('type'))
+            form_assessment = FormAssessment(
+                patient = self.request.user,
+                type = self.request.data.get('type'))
             form_assessment.save()
             #Adding the answers to the database.
             answer_data = [] #a dictionary of answers which will be added to the database at once.
             for current_answer in request.data['answers']:
-                form_assessment_question = get_object_or_404(FormAssessmentQuestion, id = current_answer['question'])
                 answer = {}
-                answer['form_assessment_question'] = form_assessment_question
-                answer['form_assessment'] = form_assessment
+                answer['form_assessment_question'] = current_answer['question']
+                answer['form_assessment'] = form_assessment.id
                 answer['answer'] = current_answer['answer']
                 answer_data.append(answer)
-            serializer = AddFormAssessmentAnswerSerializer(data=answer_data, many=True)
+            serializer = AddFormAssessmentAnswerSerializer(data = answer_data, many=True)
             if serializer.is_valid():
                 serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                raise ValidationError(serializer.errors)
+            #Getting the newly created form assessment to a serializer to return as a response
+            queryset = FormAssessmentAnswer.objects.filter(form_assessment = form_assessment)
+            view_form_assessment_serializer = ViewFormAssessmentSerializer(queryset, many=True)
+            return Response(view_form_assessment_serializer.data, status=status.HTTP_201_CREATED)
             
     @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-answers')
     def update_form_assessment_answers(self, request, form_assessment_id):
@@ -190,15 +198,14 @@ class FormAssessmentViewSet(viewsets.ViewSet):
             else:
                 #validating whether the answer ids provided in the answers array exists in the database
                 for current_answer in request.data['answers']:
-                    form_assessment_answer = get_object_or_404(FormAssessmentAnswer, id = current_answer['answer_id'], form_assessment = form_assessment.id)
-                updated_answers = []
-                #updating the answers
+                    form_assessment_answer = get_object_or_404(FormAssessmentAnswer, pk = current_answer['answer_id'], form_assessment = form_assessment.id)
+                updated_answers = [] #a dictionary of answers which will be updated at once.
                 for current_answer in request.data['answers']:
                     form_assessment_answer = get_object_or_404(FormAssessmentAnswer, id = current_answer['answer_id'], form_assessment = form_assessment.id)
                     form_assessment_answer.answer = current_answer['answer']
                     form_assessment_answer.save()
                     updated_answers.append(form_assessment_answer) # Add the updated form assessment answer to the list of updated answers
-                    serializer = ViewFormAssessmentAnswerSerializer(updated_answers, many=True)
+                    serializer = ViewFormAssessmentSerializer(updated_answers, many=True)
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -208,7 +215,7 @@ class FormAssessmentViewSet(viewsets.ViewSet):
         if request.method == 'GET':
             #Returns the feedbacks of a given form assessment
             queryset = FormAssessmentFeedback.objects.filter(form_assessment = form_assessment_id)
-            serializer = FormAssessmentFeedbackSerializer(queryset, many=True)
+            serializer = ViewFormAssessmentFeedbackSerializer(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         if request.method == 'POST':
             #assumption: only the doctor user type can invoke the modification of a form assessment
@@ -227,9 +234,11 @@ class FormAssessmentViewSet(viewsets.ViewSet):
                     form_assessment_feedback_data['form_assessment'] = form_assessment.id
                     form_assessment_feedback_data['provided_feedback'] = self.request.data.get('provided_feedback')
                     #adding the feedback to the database using the serializer
-                    serializer = FormAssessmentFeedbackSerializer(data = form_assessment_feedback_data)
+                    serializer = AddFormAssessmentFeedbackSerializer(data = form_assessment_feedback_data)
                     if serializer.is_valid():
                         serializer.save()
+                    else:
+                        raise ValidationError(serializer.errors)
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-feedbacks/(?P<form_assessment_feedback_id>\d+)')
@@ -241,8 +250,8 @@ class FormAssessmentViewSet(viewsets.ViewSet):
             raise  ValidationError("You are not authorized to update the form assessment feedback")
         else:
             #updating the feedback
-            form_assessment_feedback = get_object_or_404(FormAssessmentFeedback, pk = form_assessment_feedback_id)
+            form_assessment_feedback = get_object_or_404(FormAssessmentFeedback, pk = form_assessment_feedback_id, form_assessment = form_assessment.id)
             form_assessment_feedback.provided_feedback = self.request.data.get('provided_feedback')
             form_assessment_feedback.save()
-            serializer = FormAssessmentFeedbackSerializer(form_assessment_feedback)
+            serializer = ViewFormAssessmentFeedbackSerializer(form_assessment_feedback)
             return Response(serializer.data, status=status.HTTP_200_OK)

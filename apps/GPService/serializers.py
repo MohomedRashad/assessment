@@ -39,25 +39,41 @@ class FormAssessmentQuestionSerializer(serializers.ModelSerializer):
         model = FormAssessmentQuestion
         fields = '__all__'
 
-class ViewFormAssessmentSerializer(serializers.ModelSerializer):
+class ViewAllFormAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = FormAssessment
         exclude = ('patient',)
 
+class ViewFormAssessmentSerializer(serializers.ModelSerializer):
+    form_assessment_answers = serializers.SerializerMethodField()
+    class Meta:
+        model = FormAssessment
+        fields = ('id', 'form_assessment_answers', 'doctor', 'type', 'is_assessed', 'created_date', 'assessed_date')
+
+    def get_form_assessment_answers(self, instance):
+        # get the form assessment answers for the given form assessment instance
+        queryset = FormAssessmentAnswer.objects.filter(form_assessment = instance.id)
+        serializer = ViewFormAssessmentAnswerSerializer(queryset, many=True)
+        return serializer.data
+        
 class ViewFormAssessmentAnswerSerializer(serializers.ModelSerializer):
-    form_assessment = ViewFormAssessmentSerializer(read_only=True)
-    form_assessment_question = FormAssessmentQuestionSerializer(read_only=True)
+    form_assessment_question = FormAssessmentQuestionSerializer(read_only = True)
     class Meta:
         model = FormAssessmentAnswer
-        fields = '__all__'
+        fields = ('form_assessment_question', 'answer')
 
 class AddFormAssessmentAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = FormAssessmentAnswer
         fields = '__all__'
 
-class FormAssessmentFeedbackSerializer(serializers.ModelSerializer):
-    form_assessment = ViewFormAssessmentSerializer()
+class ViewFormAssessmentFeedbackSerializer(serializers.ModelSerializer):
+    form_assessment = ViewAllFormAssessmentSerializer()
+    class Meta:
+        model = FormAssessmentFeedback
+        fields = '__all__'
+
+class AddFormAssessmentFeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = FormAssessmentFeedback
         fields = '__all__'
