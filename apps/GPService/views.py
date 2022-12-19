@@ -176,7 +176,7 @@ class FormAssessmentViewSet(viewsets.ViewSet):
                 answer['answer'] = current_answer['answer']
                 answer_data.append(answer)
             serializer = AddFormAssessmentAnswerSerializer(data = answer_data, many=True)
-            if serializer.is_valid():
+            if serializer.is_valid(raise_exception=True):
                 serializer.save()
             #Getting the newly created form assessment to a serializer to return as a response
             queryset = FormAssessmentAnswer.objects.filter(form_assessment = form_assessment)
@@ -233,7 +233,7 @@ class FormAssessmentViewSet(viewsets.ViewSet):
                     form_assessment_feedback_data['provided_feedback'] = self.request.data.get('provided_feedback')
                     #adding the feedback to the database using the serializer
                     serializer = AddFormAssessmentFeedbackSerializer(data = form_assessment_feedback_data)
-                    if serializer.is_valid():
+                    if serializer.is_valid(raise_exception=True):
                         serializer.save()
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
