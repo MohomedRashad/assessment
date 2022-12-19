@@ -10,7 +10,7 @@ from django.db import transaction
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentFeedbackSerializer, MedicineSerializer, AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentFeedbackSerializer, MedicineSerializer, AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer
 
 class AvailabilityViewSet(viewsets.ModelViewSet):
     queryset = Availability.objects.all()
@@ -180,8 +180,8 @@ class FormAssessmentViewSet(viewsets.ViewSet):
                 serializer.save()
             #Getting the newly created form assessment to a serializer to return as a response
             queryset = FormAssessmentAnswer.objects.filter(form_assessment = form_assessment)
-            view_form_assessment_serializer = ViewFormAssessmentSerializer(queryset, many=True)
-            return Response(view_form_assessment_serializer.data, status=status.HTTP_201_CREATED)
+            view_form_assessment_answer_serializer = ViewFormAssessmentAnswerSerializer(queryset, many=True)
+            return Response(view_form_assessment_answer_serializer.data, status=status.HTTP_201_CREATED)
             
     @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-answers')
     def update_form_assessment_answers(self, request, form_assessment_id):
@@ -203,7 +203,7 @@ class FormAssessmentViewSet(viewsets.ViewSet):
                     form_assessment_answer.answer = current_answer['answer']
                     form_assessment_answer.save()
                     updated_answers.append(form_assessment_answer) # Add the updated form assessment answer to the list of updated answers
-                    serializer = ViewFormAssessmentSerializer(updated_answers, many=True)
+                    serializer = ViewFormAssessmentAnswerSerializer(updated_answers, many=True)
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
 

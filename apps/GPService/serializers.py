@@ -60,7 +60,7 @@ class ViewFormAssessmentAnswerSerializer(serializers.ModelSerializer):
     form_assessment_question = FormAssessmentQuestionSerializer(read_only = True)
     class Meta:
         model = FormAssessmentAnswer
-        fields = ('form_assessment_question', 'answer')
+        fields = ('id', 'form_assessment_question', 'answer')
 
 class AddFormAssessmentAnswerSerializer(serializers.ModelSerializer):
     class Meta:
