@@ -34,10 +34,9 @@ router.register('users', UserViewSet, basename='users')
 router.register('files', FileViewSet, basename='files')
 router.register('availabilities', AvailabilityViewSet, basename='availabilities')
 router.register('appointments', AppointmentViewSet, basename='appointments')
-router.register('formassessmentquestions', FormAssessmentQuestionViewSet, basename='formassessmentquestions')
-router.register('formassessments', FormAssessmentViewSet, basename='formassessments')
+router.register('form-assessment-questions', FormAssessmentQuestionViewSet, basename='form-assessment-questions')
 router.register('medicines', MedicineViewSet, basename='medicines')
-router.register(r'formassessments', FormAssessmentViewSet, basename='formassessments')
+router.register('form-assessments', FormAssessmentViewSet, basename='form-assessments')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
