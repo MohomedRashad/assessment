@@ -178,8 +178,6 @@ class FormAssessmentViewSet(viewsets.ViewSet):
             serializer = AddFormAssessmentAnswerSerializer(data = answer_data, many=True)
             if serializer.is_valid():
                 serializer.save()
-            else:
-                raise ValidationError(serializer.errors)
             #Getting the newly created form assessment to a serializer to return as a response
             queryset = FormAssessmentAnswer.objects.filter(form_assessment = form_assessment)
             view_form_assessment_serializer = ViewFormAssessmentSerializer(queryset, many=True)
@@ -237,8 +235,6 @@ class FormAssessmentViewSet(viewsets.ViewSet):
                     serializer = AddFormAssessmentFeedbackSerializer(data = form_assessment_feedback_data)
                     if serializer.is_valid():
                         serializer.save()
-                    else:
-                        raise ValidationError(serializer.errors)
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-feedbacks/(?P<form_assessment_feedback_id>\d+)')

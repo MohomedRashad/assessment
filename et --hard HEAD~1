@@ -1,0 +1,81 @@
+[33m0de2015[m[33m ([m[1;36mHEAD -> [m[1;32mfeat/backend/milestone-2-form-assessment-api-implementations[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33m26070e0[m HEAD@{1}: commit: fix: used the form assessment serializer to get the related answers in the retrieve method
+[33m0de2015[m[33m ([m[1;36mHEAD -> [m[1;32mfeat/backend/milestone-2-form-assessment-api-implementations[m[33m)[m HEAD@{2}: commit: fix: moved the fixtures folder to the main dir, and renamed to seed-data
+[33m1579322[m[33m ([m[1;31morigin/feat/backend/milestone-2-form-assessment-api-implementations[m[33m)[m HEAD@{3}: checkout: moving from feat/backend/milestone-2-recommended-vaccine-api-implementations to feat/backend/milestone-2-form-assessment-api-implementations
+[33m2128fec[m[33m ([m[1;31morigin/feat/backend/milestone-2-recommended-vaccine-api-implementations[m[33m, [m[1;32mfeat/backend/milestone-2-recommended-vaccine-api-implementations[m[33m)[m HEAD@{4}: commit: fix: moved the fixtures folder to the main dir, and renamed to seed-data
+[33me8ebb09[m HEAD@{5}: checkout: moving from feat/backend/milestone-2-form-assessment-api-implementations to feat/backend/milestone-2-recommended-vaccine-api-implementations
+[33m1579322[m[33m ([m[1;31morigin/feat/backend/milestone-2-form-assessment-api-implementations[m[33m)[m HEAD@{6}: commit: fix: fixed the feedback update url
+[33meacb157[m HEAD@{7}: commit: fix: fixed some miner issues with the code
+[33mcb16112[m HEAD@{8}: checkout: moving from feat/backend/milestone-2-recommended-vaccine-api-implementations to feat/backend/milestone-2-form-assessment-api-implementations
+[33me8ebb09[m HEAD@{9}: reset: moving to HEAD
+[33me8ebb09[m HEAD@{10}: commit: feat: implemented the basic endpoints for recommended vaccine API
+[33mde94e26[m[33m ([m[1;31morigin/dev[m[33m, [m[1;32mdev[m[33m)[m HEAD@{11}: checkout: moving from dev to feat/backend/milestone-2-recommended-vaccine-api-implementations
+[33mde94e26[m[33m ([m[1;31morigin/dev[m[33m, [m[1;32mdev[m[33m)[m HEAD@{12}: checkout: moving from feat/backend/milestone-2-form-assessment-api-implementations to dev
+[33mcb16112[m HEAD@{13}: commit: fix: changed the form assessment feature implementation
+[33m45694a1[m HEAD@{14}: commit: fix: added url parameter to filter the form assessment questions by treatmentsparat
+[33me895391[m HEAD@{15}: commit: fix: moved the treatments to a separate table, linked question and treatment, and created seed data for treatments and questions
+[33mbac2534[m HEAD@{16}: commit (merge): fix: fixed merge conflicts
+[33m3f4478e[m HEAD@{17}: checkout: moving from dev to feat/backend/milestone-2-form-assessment-api-implementations
+[33mde94e26[m[33m ([m[1;31morigin/dev[m[33m, [m[1;32mdev[m[33m)[m HEAD@{18}: pull: Fast-forward
+[33mea87c5c[m HEAD@{19}: checkout: moving from feat/backend/milestone-2-form-assessment-api-implementations to dev
+[33m3f4478e[m HEAD@{20}: commit: fix: used a viewset to get the question list instead of a model viewset
+[33m6e55bcb[m HEAD@{21}: commit: fix: allowed only the get request, and added seed data to the form assessment question
+[33m79ef527[m HEAD@{22}: checkout: moving from feat/backend/milestone-2-order-api-implementations to feat/backend/milestone-2-form-assessment-api-implementations
+[33mea87c5c[m HEAD@{23}: reset: moving to HEAD
+[33mea87c5c[m HEAD@{24}: checkout: moving from dev to feat/backend/milestone-2-order-api-implementations
+[33mea87c5c[m HEAD@{25}: pull: Fast-forward
+[33m0f7b249[m HEAD@{26}: checkout: moving from feat/backend/milestone-2-prescription-api-implementations to dev
+[33m2695f92[m[33m ([m[1;31morigin/feat/backend/milestone-2-prescription-api-implementations[m[33m, [m[1;32mfeat/backend/milestone-2-prescription-api-implementations[m[33m)[m HEAD@{27}: checkout: moving from dev to feat/backend/milestone-2-prescription-api-implementations
+[33m0f7b249[m HEAD@{28}: checkout: moving from feat/backend/milestone-2-form-assessment-api-implementations to dev
+[33m79ef527[m HEAD@{29}: commit (merge): fix: fixed a merge conflict in the views.py file
+[33m847be6a[m HEAD@{30}: checkout: moving from feat/backend/milestone-2-appointment-api-implementations to feat/backend/milestone-2-form-assessment-api-implementations
+[33mf0e492f[m[33m ([m[1;31morigin/feat/backend/milestone-2-appointment-api-implementations[m[33m, [m[1;32mfeat/backend/milestone-2-appointment-api-implementations[m[33m)[m HEAD@{31}: commit (merge): fix: fixed a merge conflict in the views.py file
+[33mf0e4ef8[m HEAD@{32}: checkout: moving from feat/backend/milestone-2-medicine-api-implementations to feat/backend/milestone-2-appointment-api-implementations
+[33mc71343d[m[33m ([m[1;31morigin/feat/backend/milestone-2-medicine-api-implementations[m[33m, [m[1;32mfeat/backend/milestone-2-medicine-api-implementations[m[33m)[m HEAD@{33}: commit (merge): fix: fixed merge conflict in the views.py file
+[33m8033e75[m HEAD@{34}: checkout: moving from dev to feat/backend/milestone-2-medicine-api-implementations
+[33m0f7b249[m HEAD@{35}: checkout: moving from feat/backend/milestone-2-prescription-api-implementations to dev
+[33m2695f92[m[33m ([m[1;31morigin/feat/backend/milestone-2-prescription-api-implementations[m[33m, [m[1;32mfeat/backend/milestone-2-prescription-api-implementations[m[33m)[m HEAD@{36}: commit: feat: implemented CRUD operations for the prescription API
+[33m0f7b249[m HEAD@{37}: checkout: moving from dev to feat/backend/milestone-2-prescription-api-implementations
+[33m0f7b249[m HEAD@{38}: pull: Fast-forward
+[33m2c4276e[m HEAD@{39}: checkout: moving from feat/backend/milestone-2-form-assessment-api-implementations to dev
+[33m847be6a[m HEAD@{40}: checkout: moving from fix/backend/milestone-2-doctor-availability-api-implementations to feat/backend/milestone-2-form-assessment-api-implementations
+[33med820fb[m[33m ([m[1;31morigin/fix/backend/milestone-2-doctor-availability-api-implementations[m[33m, [m[1;32mfix/backend/milestone-2-doctor-availability-api-implementations[m[33m)[m HEAD@{41}: commit: fix: fixed a bug in the perform_update where the way of accessing the payload was incorrect
+[33m2c4276e[m HEAD@{42}: checkout: moving from dev to fix/backend/milestone-2-doctor-availability-api-implementations
+[33m2c4276e[m HEAD@{43}: checkout: moving from feat/backend/milestone-2-appointment-api-implementations to dev
+[33mf0e4ef8[m HEAD@{44}: commit: fix: included the appointment id in the appointment update response
+[33m4e9d3c3[m HEAD@{45}: checkout: moving from dev to feat/backend/milestone-2-appointment-api-implementations
+[33m2c4276e[m HEAD@{46}: checkout: moving from feat/backend/milestone-2-form-assessment-api-implementations to dev
+[33m847be6a[m HEAD@{47}: checkout: moving from feat/backend/milestone-2-medicine-api-implementations to feat/backend/milestone-2-form-assessment-api-implementations
+[33m8033e75[m HEAD@{48}: commit: fix: removed an extra line in the availability viewset
+[33mb02eebe[m HEAD@{49}: checkout: moving from feat/backend/milestone-2-appointment-api-implementations to feat/backend/milestone-2-medicine-api-implementations
+[33m4e9d3c3[m HEAD@{50}: commit: fix: used the super method to update the appointment status, and removed an extra line in the availability viewset
+[33mcfae57b[m HEAD@{51}: checkout: moving from feat/backend/milestone-1-model-implementations to feat/backend/milestone-2-appointment-api-implementations
+[33med98d81[m[33m ([m[1;31morigin/feat/backend/milestone-2-doctor-availability-api-implementations[m[33m, [m[1;32mfeat/backend/milestone-2-doctor-availability-api-implementations[m[33m, [m[1;32mfeat/backend/milestone-1-model-implementations[m[33m)[m HEAD@{52}: checkout: moving from feat/backend/milestone-2-doctor-availability-api-implementations to feat/backend/milestone-1-model-implementations
+[33med98d81[m[33m ([m[1;31morigin/feat/backend/milestone-2-doctor-availability-api-implementations[m[33m, [m[1;32mfeat/backend/milestone-2-doctor-availability-api-implementations[m[33m, [m[1;32mfeat/backend/milestone-1-model-implementations[m[33m)[m HEAD@{53}: checkout: moving from feat/backend/milestone-2-appointment-api-implementations to feat/backend/milestone-2-doctor-availability-api-implementations
+[33mcfae57b[m HEAD@{54}: reset: moving to HEAD~1
+[33m446c52a[m HEAD@{55}: commit: fix: used the super method to udpate the appointment status oto canceled
+[33mcfae57b[m HEAD@{56}: checkout: moving from feat/backend/milestone-2-form-assessment-api-implementations to feat/backend/milestone-2-appointment-api-implementations
+[33m847be6a[m HEAD@{57}: commit: feat: implemented CRUD operations for the form assessment feedback API
+[33mc9e77f4[m HEAD@{58}: commit: feat: implemented CRUD operations for the form assessment answer API
+[33m9e8fd09[m HEAD@{59}: commit: feat: implementedimplemeneted CRUD operations for the form assessment APIapiimplmeneted
+[33mf62e23f[m HEAD@{60}: Branch: renamed refs/heads/feat/backend/milestone-2-form-assessment-question-api-implementations to refs/heads/feat/backend/milestone-2-form-assessment-api-implementations
+[33mf62e23f[m HEAD@{62}: commit: feat: implemented the CRUD operations for the form assessment question APIapi
+[33m2c4276e[m HEAD@{63}: checkout: moving from dev to feat/backend/milestone-2-form-assessment-question-api-implementations
+[33m2c4276e[m HEAD@{64}: checkout: moving from feat/backend/milestone-2-appointment-api-implementations to dev
+[33mcfae57b[m HEAD@{65}: commit: fix: changed the order in wich the validations is been performed are thn perform_update to check the payload firstaccess
+[33mcfcb4fb[m HEAD@{66}: checkout: moving from feat/backend/milestone-2-medicine-api-implementations to feat/backend/milestone-2-appointment-api-implementations
+[33mb02eebe[m HEAD@{67}: commit: feat: implemented the basic CRUD operations for the medicine API
+[33m2c4276e[m HEAD@{68}: checkout: moving from dev to feat/backend/milestone-2-medicine-api-implementations
+[33m2c4276e[m HEAD@{69}: pull: Fast-forward
+[33m970e997[m HEAD@{70}: checkout: moving from feat/backend/milestone-2-appointment-api-implementations to dev
+[33mcfcb4fb[m HEAD@{71}: commit: fix: modified the unique constraint for the appointment model
+[33m3bf6c20[m HEAD@{72}: commit: fix: moved the appointment cancelling logic to perform_update method from the perform_destroy method
+[33m265e04a[m HEAD@{73}: commit: fix: changed the logic for the get_query_set method
+[33m901c9eb[m HEAD@{74}: commit: fix: changed the logic to use two serializers for the get and post requests
+[33m852f4e6[m HEAD@{75}: commit: fix: used one serializer for get and post request.
+[33m918499d[m HEAD@{76}: commit: fix: modified the get_query_set method, added multiple serializers for different actions
+[33ma14fa20[m HEAD@{77}: commit: fix: changed the way the current user is being accessed in the query set methodbeen acceuser
+[33m66e9bc3[m HEAD@{78}: commit: fix: used related_name in the get_query_set, updated the serializersto accept only the status, used database transactionsdatberailizer
+[33m23c090e[m HEAD@{79}: commit: fix:added a query param for the url, added validations for the availabilityfixedsome miner issueschanges
+[33m4feda12[m HEAD@{80}: checkout: moving from master to feat/backend/milestone-2-appointment-api-implementations
+[33m601e5d6[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{81}: clone: from https://github.com/MohomedRashad/assessment.git
