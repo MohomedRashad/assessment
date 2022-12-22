@@ -152,6 +152,7 @@ class FormAssessmentViewSet(viewsets.ViewSet):
     @transaction.atomic
     @action(methods=['post'], detail=False, url_path='form-assessment-answers')
     def create_form_assessment(self, request):
+        answer_data = [] #a dictionary of answers which will be added to the database at once.
         if not 'type' in self.request.data:
             raise ValidationError("The form assessment type is required.")
         elif not 'answers' in self.request.data:
@@ -163,10 +164,10 @@ class FormAssessmentViewSet(viewsets.ViewSet):
                 type = self.request.data.get('type'))
             form_assessment.save()
             #Adding the answers to the database.
-            answer_data = [] #a dictionary of answers which will be added to the database at once.
             for current_answer in request.data['answers']:
+                form_assessment_question = get_object_or_404(FormAssessmentQuestion, id = current_answer['question'])
                 answer = {
-                    'form_assessment_question': current_answer['question'],
+                    'form_assessment_question': form_assessment_question.id,
                     'form_assessment': form_assessment.id,
                     'answer': current_answer['answer']
                     }
@@ -174,9 +175,8 @@ class FormAssessmentViewSet(viewsets.ViewSet):
             serializer = AddFormAssessmentAnswerSerializer(data = answer_data, many=True)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
-            #Getting the newly created form assessment to a serializer to return as a response
-            queryset = FormAssessmentAnswer.objects.filter(form_assessment = form_assessment)
-            view_form_assessment_answer_serializer = ViewFormAssessmentAnswerSerializer(queryset, many=True)
+            #Using the saved data directly and passing it to the ViewFormAssessmentAnswerSerializer
+            view_form_assessment_answer_serializer = ViewFormAssessmentAnswerSerializer(serializer.data, many=True)
             return Response(view_form_assessment_answer_serializer.data, status=status.HTTP_201_CREATED)
             
     @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-answers')

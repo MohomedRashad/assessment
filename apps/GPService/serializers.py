@@ -39,6 +39,18 @@ class FormAssessmentQuestionSerializer(serializers.ModelSerializer):
         model = FormAssessmentQuestion
         fields = '__all__'
 
+    def to_representation(self, instance):
+        if isinstance(instance, int):
+            return instance
+        else:
+            treatments = instance.treatments.all()
+            return {'form_assessment_question': {
+                'id': instance.id,
+                'treatments': [{'name': treatment.name} for treatment in treatments],
+                'question': instance.question
+            }
+        }
+
 class ViewAllFormAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = FormAssessment
@@ -57,7 +69,7 @@ class ViewFormAssessmentSerializer(serializers.ModelSerializer):
         return serializer.data
         
 class ViewFormAssessmentAnswerSerializer(serializers.ModelSerializer):
-    form_assessment_question = FormAssessmentQuestionSerializer(read_only = True)
+    form_assessment_question = FormAssessmentQuestionSerializer()
     class Meta:
         model = FormAssessmentAnswer
         fields = ('id', 'form_assessment_question', 'answer')
