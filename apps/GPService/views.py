@@ -165,9 +165,8 @@ class FormAssessmentViewSet(viewsets.ViewSet):
             form_assessment.save()
             #Adding the answers to the database.
             for current_answer in request.data['answers']:
-                form_assessment_question = get_object_or_404(FormAssessmentQuestion, id = current_answer['question'])
                 answer = {
-                    'form_assessment_question': form_assessment_question.id,
+                    'form_assessment_question': current_answer['question'],
                     'form_assessment': form_assessment.id,
                     'answer': current_answer['answer']
                     }
@@ -175,9 +174,7 @@ class FormAssessmentViewSet(viewsets.ViewSet):
             serializer = AddFormAssessmentAnswerSerializer(data = answer_data, many=True)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
-            #Using the saved data directly and passing it to the ViewFormAssessmentAnswerSerializer
-            view_form_assessment_answer_serializer = ViewFormAssessmentAnswerSerializer(serializer.data, many=True)
-            return Response(view_form_assessment_answer_serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
             
     @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-answers')
     def update_form_assessment_answers(self, request, form_assessment_id):

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
 from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Treatment
 
 class AvailabilitySerializer(serializers.ModelSerializer):
@@ -37,19 +38,7 @@ class FormAssessmentQuestionSerializer(serializers.ModelSerializer):
     treatments = TreatmentSerializer(read_only=True, many=True)
     class Meta:
         model = FormAssessmentQuestion
-        fields = '__all__'
-
-    def to_representation(self, instance):
-        if isinstance(instance, int):
-            return instance
-        else:
-            treatments = instance.treatments.all()
-            return {'form_assessment_question': {
-                'id': instance.id,
-                'treatments': [{'name': treatment.name} for treatment in treatments],
-                'question': instance.question
-            }
-        }
+        fields = ('id', 'treatments', 'question')
 
 class ViewAllFormAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -75,9 +64,21 @@ class ViewFormAssessmentAnswerSerializer(serializers.ModelSerializer):
         fields = ('id', 'form_assessment_question', 'answer')
 
 class AddFormAssessmentAnswerSerializer(serializers.ModelSerializer):
+    form_assessment_question = FormAssessmentQuestionSerializer()
     class Meta:
         model = FormAssessmentAnswer
-        fields = '__all__'
+        fields = ('id', 'form_assessment_question', 'form_assessment', 'answer')
+    form_assessment_question = {'create': False}
+
+def create(self, validated_data):
+    form_assessment_question_data = validated_data.pop('form_assessment_question')
+    form_assessment_question = get_object_or_404(FormAssessmentQuestion, id = form_assessment_question_data['id'])
+    form_assessment_answer = FormAssessmentAnswer.objects.create(
+        form_assessment_question=form_assessment_question,
+        form_assessment=validated_data['form_assessment'],
+        answer=validated_data['answer']
+    )
+    return form_assessment_answer
 
 class ViewFormAssessmentFeedbackSerializer(serializers.ModelSerializer):
     form_assessment = ViewAllFormAssessmentSerializer()

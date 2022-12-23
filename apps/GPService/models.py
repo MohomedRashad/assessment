@@ -94,7 +94,7 @@ class Treatment(models.Model):
 
 class FormAssessmentQuestion(models.Model):
     treatments = models.ManyToManyField(Treatment)
-    question = models.CharField(max_length=200, unique=True)
+    question = models.CharField(max_length=200)
 
     def __str__(self):
         return self.question
