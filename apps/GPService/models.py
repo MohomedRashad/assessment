@@ -167,8 +167,8 @@ class Order(models.Model):
     null=True,
     related_name='orders'
     )
-    created_date = models.DateTimeField(timezone.now)
-    total_amount = models.IntegerField(blank=True, null=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    total_amount = models.PositiveIntegerField(blank=True, null=True)
 
 class Country(models.Model):
     name = models.CharField(max_length=50)
