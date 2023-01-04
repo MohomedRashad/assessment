@@ -1,0 +1,56 @@
+[
+{
+    "model": "GPService.formassessmentquestion",
+    "pk": 1,
+    "fields": {
+        "question": "Question1?",
+        "treatments": [
+            1
+        ]
+    }
+},
+{
+    "model": "GPService.formassessmentquestion",
+    "pk": 2,
+    "fields": {
+        "question": "Question2?",
+        "treatments": [
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "GPService.formassessmentquestion",
+    "pk": 3,
+    "fields": {
+        "question": "Question3?",
+        "treatments": [
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "GPService.formassessmentquestion",
+    "pk": 4,
+    "fields": {
+        "question": "Question4?",
+        "treatments": [
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "GPService.formassessmentquestion",
+    "pk": 5,
+    "fields": {
+        "question": "Question5?",
+        "treatments": [
+            1,
+            2
+        ]
+    }
+}
+]
