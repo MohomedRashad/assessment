@@ -64,21 +64,9 @@ class ViewFormAssessmentAnswerSerializer(serializers.ModelSerializer):
         fields = ('id', 'form_assessment_question', 'answer')
 
 class AddFormAssessmentAnswerSerializer(serializers.ModelSerializer):
-    form_assessment_question = FormAssessmentQuestionSerializer()
     class Meta:
         model = FormAssessmentAnswer
-        fields = ('id', 'form_assessment_question', 'form_assessment', 'answer')
-    form_assessment_question = {'create': False}
-
-def create(self, validated_data):
-    form_assessment_question_data = validated_data.pop('form_assessment_question')
-    form_assessment_question = get_object_or_404(FormAssessmentQuestion, id = form_assessment_question_data['id'])
-    form_assessment_answer = FormAssessmentAnswer.objects.create(
-        form_assessment_question=form_assessment_question,
-        form_assessment=validated_data['form_assessment'],
-        answer=validated_data['answer']
-    )
-    return form_assessment_answer
+        fields = '__all__'
 
 class ViewFormAssessmentFeedbackSerializer(serializers.ModelSerializer):
     form_assessment = ViewAllFormAssessmentSerializer()

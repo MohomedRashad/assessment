@@ -174,7 +174,9 @@ class FormAssessmentViewSet(viewsets.ViewSet):
             serializer = AddFormAssessmentAnswerSerializer(data = answer_data, many=True)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            queryset = FormAssessment(pk = form_assessment.id)
+            return_serializer = ViewFormAssessmentSerializer(queryset)
+            return Response(return_serializer.data, status=status.HTTP_201_CREATED)
             
     @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-answers')
     def update_form_assessment_answers(self, request, form_assessment_id):
