@@ -19,28 +19,19 @@ class AppointmentStatus(models.TextChoices):
     COMPLETED = 'COMPLETED', _('COMPLETED')
     CANCELED = 'CANCELED', _('CANCELED')
 
-
 class MedicineType(models.TextChoices):
     TABLET = 'TABLET', _('TABLET')
     CAPSULES = 'CAPSULES', _('CAPSULES')
     VACCINE = 'VACCINE', _('VACCINE')
 
-
-class Treatment(models.TextChoices):
-    CANCER = 'CANCER', _('CANCER')
-    ALLERGIES = 'ALLERGIES', _('ALLERGIES')
-
-
 class FormAssessmentType(models.TextChoices):
     ONE_TIME_FORM = 'ONE_TIME_FORM', _('ONE_TIME_FORM')
     SUBSCRIPTION_FORM = 'SUBSCRIPTION_FORM', _('SUBSCRIPTION_FORM')
-
 
 class OrderType(models.TextChoices):
     FORM_ASSESSMENT = 'FORM_ASSESSMENT', _('FORM_ASSESSMENT')
     VIDEO_ASSESSMENT = 'VIDEO_ASSESSMENT', _('VIDEO_ASSESSMENT')
     PRESCRIPTION = 'PRESCRIPTION', _('PRESCRIPTION')
-
 
 #Models
 class Availability(models.Model):
@@ -87,20 +78,26 @@ class Appointment(models.Model):
                     ]
 
 class Medicine(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
     type = models.CharField(
         max_length=50,
         choices=MedicineType.choices,
         )
-    available_quantity = models.IntegerField()
-    price = models.DecimalField(max_digits=4, decimal_places=2)
+    available_quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=6, decimal_places=2, validators=[MinValueValidator(1)])
+
+class Treatment(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
 
 class FormAssessmentQuestion(models.Model):
-    treatment = models.CharField(
-        max_length=100,
-        choices=Treatment.choices
-        )
+    treatments = models.ManyToManyField(Treatment)
     question = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.question
 
 class FormAssessment(models.Model):
     patient = models.ForeignKey(
@@ -130,10 +127,20 @@ class FormAssessmentAnswer(models.Model):
     form_assessment = models.ForeignKey(FormAssessment, on_delete=models.CASCADE, related_name='form_assessment_answers')
     answer = models.TextField()
 
+    def __str__(self):
+        return self.answer
+
 class FormAssessmentFeedback(models.Model):
-    form_assessment = models.ForeignKey(FormAssessment, on_delete=models.CASCADE, related_name='form_assessment_feedback')
-    provided_feedback = models.TextField()
-    posted_date = models.DateField(timezone.now)
+    form_assessment = models.ForeignKey(
+        FormAssessment,
+        on_delete=models.CASCADE,
+        related_name='form_assessment_feedback'
+        )
+    provided_feedback = models.CharField(max_length=500)
+    posted_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.provided_feedback
 
 class Prescription(models.Model):
     medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='prescriptions')

@@ -26,7 +26,7 @@ from rest_framework.routers import DefaultRouter
 
 from apps.files.views import FileViewSet
 from apps.users.views import AuthViewSet, UserViewSet
-from apps.GPService.views import AvailabilityViewSet, AppointmentViewSet, PrescriptionViewSet
+from apps.GPService.views import AvailabilityViewSet, AppointmentViewSet, FormAssessmentQuestionViewSet, FormAssessmentViewSet, MedicineViewSet, PrescriptionViewSet
 
 router = DefaultRouter()
 router.register('auth', AuthViewSet, basename='auth')
@@ -35,11 +35,13 @@ router.register('files', FileViewSet, basename='files')
 router.register('availabilities', AvailabilityViewSet, basename='availabilities')
 router.register('appointments', AppointmentViewSet, basename='appointments')
 router.register('prescriptions', PrescriptionViewSet, basename='prescriptions')
+router.register('form-assessment-questions', FormAssessmentQuestionViewSet, basename='form-assessment-questions')
+router.register('medicines', MedicineViewSet, basename='medicines')
+router.register('form-assessments', FormAssessmentViewSet, basename='form-assessments')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
-
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
