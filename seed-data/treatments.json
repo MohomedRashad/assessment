@@ -1,0 +1,16 @@
+[
+{
+    "model": "GPService.treatment",
+    "pk": 1,
+    "fields": {
+        "name": "ALLERGIES"
+    }
+},
+{
+    "model": "GPService.treatment",
+    "pk": 2,
+    "fields": {
+        "name": "CANCER"
+    }
+}
+]
