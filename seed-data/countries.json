@@ -1,0 +1,72 @@
+[
+{
+    "model": "GPService.country",
+    "pk": 1,
+    "fields": {
+        "name": "Sri Lanka"
+    }
+},
+{
+    "model": "GPService.country",
+    "pk": 3,
+    "fields": {
+        "name": "Syria"
+    }
+},
+{
+    "model": "GPService.country",
+    "pk": 4,
+    "fields": {
+        "name": "Senegal"
+    }
+},
+{
+    "model": "GPService.country",
+    "pk": 5,
+    "fields": {
+        "name": "United States of America"
+    }
+},
+{
+    "model": "GPService.country",
+    "pk": 6,
+    "fields": {
+        "name": "United Kingdom"
+    }
+},
+{
+    "model": "GPService.country",
+    "pk": 7,
+    "fields": {
+        "name": "Uganda"
+    }
+},
+{
+    "model": "GPService.country",
+    "pk": 8,
+    "fields": {
+        "name": "Ukraine"
+    }
+},
+{
+    "model": "GPService.country",
+    "pk": 9,
+    "fields": {
+        "name": "Uzbekistan"
+    }
+},
+{
+    "model": "GPService.country",
+    "pk": 10,
+    "fields": {
+        "name": "United Arab Emirates"
+    }
+},
+{
+    "model": "GPService.country",
+    "pk": 11,
+    "fields": {
+        "name": "Uruguay"
+    }
+}
+]
