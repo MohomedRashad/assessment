@@ -130,6 +130,11 @@ class FormAssessmentAnswer(models.Model):
     def __str__(self):
         return self.answer
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['form_assessment_question', 'form_assessment'], name='unique_answer_per_question_per_form')
+        ]
+
 class FormAssessmentFeedback(models.Model):
     form_assessment = models.ForeignKey(
         FormAssessment,
