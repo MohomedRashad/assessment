@@ -2,6 +2,8 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import status
+from .models import Availability, Appointment, Medicine, Country, RecommendedVaccine
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
 from .services import check_meeting_slot_time
@@ -127,6 +129,23 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
 class MedicineViewSet(viewsets.ModelViewSet):
     queryset = Medicine.objects.all()
     serializer_class = MedicineSerializer
+
+class RecommendedVaccineViewSet(viewsets.ModelViewSet):
+    queryset = Country.objects.all()
+    serializer_class = CountrySerializer
+
+    def get_serializer_class(self):
+        if self.action == 'create' or self.action == 'update' or self.action == 'destroy':
+            return AddRecommendedVaccineSerializer
+        elif self.request.query_params.get('country'):
+            return ViewRecommendedVaccineSerializer
+        return super(RecommendedVaccineViewSet, self).get_serializer_class()
+
+    def get_queryset(self):
+        country = self.request.query_params.get('country')
+        if country is not None:
+            return RecommendedVaccine.objects.filter(country__name__startswith=country)
+        return self.queryset
 
 class FormAssessmentQuestionViewSet(viewsets.ViewSet):
     def list(self, request):

@@ -179,9 +179,9 @@ class Order(models.Model):
     total_amount = models.PositiveIntegerField(blank=True, null=True)
 
 class Country(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True)
 
 class RecommendedVaccine(models.Model)    :
     country = models.ForeignKey(Country, on_delete=models.CASCADE, related_name='recommended_vaccines')
     medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, blank=True, null=True, related_name='recommended_vaccines')
-    posted_date = models.DateTimeField(timezone.now)
+    posted_date = models.DateTimeField(auto_now_add=True)
