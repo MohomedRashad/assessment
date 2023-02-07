@@ -40,16 +40,17 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
         ending_time = datetime.strptime(self.request.data.get('ending_time'), '%H:%M:%S')
         if availability.is_booked:
             raise ValidationError("This availability instance cannot be modified as it has already been booked before")            
-        elif Availability.objects.filter(
-            date=self.request.data['date'],
-            starting_time=self.request.data['starting_time'],
-            ending_time=self.request.data['ending_time'],
-            doctor=self.request.user).exists():
-            raise ValidationError("This availability instance has already been added before")
         elif not check_meeting_slot_time(
             starting_time.time(),
             ending_time.time()):
             raise ValidationError("The duration of the availability slot should exactly be 15 minutes")
+        elif availability.starting_time != datetime.strptime(self.request.data.get('starting_time'), '%H:%M:%S').time() and availability.starting_time != datetime.strptime(self.request.data.get('starting_time'), '%H:%M:%S').time():
+            if Availability.objects.filter(
+                date=self.request.data['date'],
+                starting_time = self.request.data['starting_time'],
+                ending_time=self.request.data['ending_time'],
+                doctor=self.request.user).exists():
+                raise ValidationError("This availability instance has already been added before")
         else:
             super().perform_update(serializer)
 
