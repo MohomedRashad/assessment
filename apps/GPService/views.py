@@ -2,11 +2,11 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import status
-from .models import Availability, Appointment, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Country, RecommendedVaccine, FormAssessmentQuestion
-from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
+from .models import Availability, Appointment, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Country, Order, RecommendedVaccine, FormAssessmentQuestion
+from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
-from .services import check_meeting_slot_time
+from .services import check_meeting_slot_time, create_order
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from rest_framework.response import Response
@@ -104,6 +104,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def perform_update(self, serializer):
         appointment = self.get_object()
+        availability = get_object_or_404(Availability, id = appointment.availability.id)
         if not 'status' in self.request.data:
             raise ValidationError("The status has not been provided")
         elif appointment.status == 'COMPLETED':
@@ -114,13 +115,14 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 raise ValidationError("This appointment cannot be deleted, as it is ongoing at the moment")
             else:
                     #Updating the availability status to not booked.
-                    availability = get_object_or_404(
-                        Availability, id = appointment.availability.id)
                     availability.is_booked = False
                     availability.save()
                         #Setting the appointment status to 'CANCELED'
                     super().perform_update(serializer)
         else:
+            #Creating the order for the completed appointment
+            order = {'appointment': appointment, 'total_amount': availability.doctor_charge}
+            create_order('VIDEO_ASSESSMENT', **order)
             super().perform_update(serializer)
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
@@ -245,6 +247,10 @@ class FormAssessmentViewSet(viewsets.ViewSet):
                     form_assessment.is_assessed = True
                     form_assessment.assessed_date = datetime.today()
                     form_assessment.save()
+                    #Creating the order for assessed form assessment
+                    order = {'form_assessment': form_assessment, 'total_amount': amount}
+                    amount = 100
+                    create_order('FORM_ASSESSMENT', **order)
                     #creating a dictionary to hold the form assessment feedback data.
                     form_assessment_feedback_data = {
                         'form_assessment': form_assessment.id,
@@ -270,3 +276,12 @@ class FormAssessmentViewSet(viewsets.ViewSet):
             form_assessment_feedback.save()
             serializer = ViewFormAssessmentFeedbackSerializer(form_assessment_feedback)
             return Response(serializer.data, status=status.HTTP_200_OK)
+
+class OrderViewSet(viewsets.ViewSet):
+    def list(self, request):
+        type = self.request.query_params.get('type')
+        queryset = Order.objects.all()
+        if type is not None:
+            queryset = queryset.filter(type = type)
+        serializer = OrderSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

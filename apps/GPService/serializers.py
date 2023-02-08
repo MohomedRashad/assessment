@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
-from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Treatment, Country, RecommendedVaccine, Prescription
+from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Order, Treatment, Country, RecommendedVaccine, Prescription
 
 class AvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -101,3 +101,7 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         model = Prescription
         fields = '__all__'
 
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = '__all__'
