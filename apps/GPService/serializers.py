@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
-from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Treatment, Country, RecommendedVaccine
+from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Treatment, Country, RecommendedVaccine, Prescription
 
 class AvailabilitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -94,5 +94,10 @@ class ViewFormAssessmentFeedbackSerializer(serializers.ModelSerializer):
 class AddFormAssessmentFeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = FormAssessmentFeedback
+        fields = '__all__'
+
+class PrescriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Prescription
         fields = '__all__'
 

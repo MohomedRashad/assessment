@@ -11,6 +11,8 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Prescription
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentFeedbackSerializer, MedicineSerializer, AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, PrescriptionSerializer
 
 class AvailabilityViewSet(viewsets.ModelViewSet):
     queryset = Availability.objects.all()
@@ -120,6 +122,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     super().perform_update(serializer)
         else:
             super().perform_update(serializer)
+
+class PrescriptionViewSet(viewsets.ModelViewSet):
+    queryset = Prescription.objects.all()
+    serializer_class = PrescriptionSerializer
 
 class MedicineViewSet(viewsets.ModelViewSet):
     queryset = Medicine.objects.all()

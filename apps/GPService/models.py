@@ -149,7 +149,7 @@ class FormAssessmentFeedback(models.Model):
 
 class Prescription(models.Model):
     medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='prescriptions')
-    prescribed_quantity = models.IntegerField()
+    prescribed_quantity = models.PositiveIntegerField()
     appointment = models.ForeignKey(
         Appointment,
         on_delete=models.CASCADE,
@@ -181,7 +181,7 @@ class Order(models.Model):
     related_name='orders'
     )
     created_date = models.DateTimeField(timezone.now)
-    total_amount = models.IntegerField(blank=True, null=True)
+    total_amount = models.PositiveIntegerField(blank=True, null=True)
 
 class Country(models.Model):
     name = models.CharField(max_length=50, unique=True)
