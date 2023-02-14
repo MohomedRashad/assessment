@@ -141,44 +141,47 @@ class FormAssessmentFeedback(models.Model):
         on_delete=models.CASCADE,
         related_name='form_assessment_feedback'
         )
-    provided_feedback = models.CharField(max_length=500)
+    provided_feedback = models.TextField()
     posted_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.provided_feedback
 
 class Prescription(models.Model):
-    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='prescriptions')
+    medicine = models.ManyToManyField(Medicine, related_name='prescriptions')
     prescribed_quantity = models.PositiveIntegerField()
-    appointment = models.ForeignKey(
+    appointment = models.OneToOneField(
         Appointment,
         on_delete=models.CASCADE,
         blank=True,
         null=True,
-        related_name='prescriptions'
+        related_name='prescription'
         )
-    form_assessment = models.ForeignKey(
+    form_assessment = models.OneToOneField(
         FormAssessment,
         on_delete=models.CASCADE,
         blank=True,
         null=True,
-        related_name='prescriptions'
+        related_name='prescription'
         )
+    description = models.TextField(blank=True, null=True)
     is_accepted = models.BooleanField(default=False)
 
 class Order(models.Model):
     type = models.CharField(
         max_length=50,
         choices=OrderType.choices)
-    appointment = models.ForeignKey(Appointment,
+    appointment = models.OneToOneField(Appointment,
     on_delete=models.CASCADE,
     null=True,
-    related_name='orders'
+    blank=True,
+    related_name='order'
     )
-    form_assessment = models.ForeignKey(FormAssessment,   
+    form_assessment = models.OneToOneField(FormAssessment,   
     on_delete=models.CASCADE,
     null=True,
-    related_name='orders'
+    blank=True,
+    related_name='order'
     )
     created_date = models.DateTimeField(auto_now_add=True)
     total_amount = models.PositiveIntegerField(blank=True, null=True)
