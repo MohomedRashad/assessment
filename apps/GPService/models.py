@@ -155,14 +155,14 @@ class Prescription(models.Model):
         on_delete=models.CASCADE,
         blank=True,
         null=True,
-        related_name='prescriptions'
+        related_name='prescription'
         )
     form_assessment = models.OneToOneField(
         FormAssessment,
         on_delete=models.CASCADE,
         blank=True,
         null=True,
-        related_name='prescriptions'
+        related_name='prescription'
         )
     description = models.TextField(blank=True, null=True)
     is_accepted = models.BooleanField(default=False)
@@ -175,13 +175,13 @@ class Order(models.Model):
     on_delete=models.CASCADE,
     null=True,
     blank=True,
-    related_name='orders'
+    related_name='order'
     )
     form_assessment = models.OneToOneField(FormAssessment,   
     on_delete=models.CASCADE,
     null=True,
     blank=True,
-    related_name='orders'
+    related_name='order'
     )
     created_date = models.DateTimeField(timezone.now)
     total_amount = models.PositiveIntegerField(blank=True, null=True)
