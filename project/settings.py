@@ -253,3 +253,5 @@ ZAPPA_AWS_REGION = os.getenv('ZAPPA_AWS_REGION', '')
 
 # Test runner
 TEST_RUNNER = 'project.pytest_runner.PytestTestRunner'
+
+FORM_ASSESSMENT_AMOUNT = 1500
