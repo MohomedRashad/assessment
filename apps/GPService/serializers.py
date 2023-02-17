@@ -96,13 +96,8 @@ class AddFormAssessmentFeedbackSerializer(serializers.ModelSerializer):
         model = FormAssessmentFeedback
         fields = '__all__'
 
-class ViewPrescriptionSerializer(serializers.ModelSerializer):
-    medicine = MedicineSerializer(many=True)
-    class Meta:
-        model = Prescription
-        fields = '__all__'
-
-class AddPrescriptionSerializer(serializers.ModelSerializer):
+class PrescriptionSerializer(serializers.ModelSerializer):
+    medicine = MedicineSerializer(many=True, required=False)
     class Meta:
         model = Prescription
         fields = '__all__'

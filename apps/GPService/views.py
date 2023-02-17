@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import status
 from .models import Availability, Appointment, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Country, RecommendedVaccine, FormAssessmentQuestion
-from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AddPrescriptionSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
+from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
 from .services import check_meeting_slot_time
@@ -12,7 +12,7 @@ from django.db import transaction
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Prescription
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentFeedbackSerializer, MedicineSerializer, AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, ViewPrescriptionSerializer
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentFeedbackSerializer, MedicineSerializer, AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, PrescriptionSerializer
 
 class AvailabilityViewSet(viewsets.ModelViewSet):
     queryset = Availability.objects.all()
@@ -125,12 +125,22 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
     queryset = Prescription.objects.all()
-    serializer_class = ViewPrescriptionSerializer
-
-    def get_serializer_class(self):
-        if self.action == 'create' or self.action == 'update' or self.action == 'destroy':
-            return AddPrescriptionSerializer
-        return super(PrescriptionViewSet, self).get_serializer_class()
+    serializer_class = PrescriptionSerializer
+    
+    def create(self, request, *args, **kwargs):
+        # Get the medicine IDs from the request data and remove the 'medicine' key from the request data
+        medicine_ids = request.data.pop('medicine', [])
+        # Create a new serializer instance with the request data
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        prescription = serializer.save()
+        # Add the related medicines to the prescription by iterating over the medicine_ids list
+        for medicine_id in medicine_ids:
+            medicine = Medicine.objects.get(id=medicine_id)
+            prescription.medicine.add(medicine)
+        # Serialize the prescription instance to a response using a new serializer instance
+        response_serializer = self.get_serializer(prescription)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 class MedicineViewSet(viewsets.ModelViewSet):
     queryset = Medicine.objects.all()
