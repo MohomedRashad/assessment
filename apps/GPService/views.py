@@ -127,6 +127,15 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
     queryset = Prescription.objects.all()
     serializer_class = PrescriptionSerializer
     
+    def list(self, request):
+        queryset = self.get_queryset()
+        is_accepted = self.request.query_params.get('is_accepted')
+        if is_accepted is not None:
+            is_accepted = str(is_accepted).lower() == 'true'
+            queryset = queryset.filter(is_accepted=is_accepted)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def create(self, request, *args, **kwargs):
         # Get the medicine IDs from the request data and remove the 'medicine' key from the request data
         medicine_ids = request.data.pop('medicine', [])
