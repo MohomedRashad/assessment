@@ -133,21 +133,15 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
         # Validate the medicine IDs before continuing
         medicines = []
         for medicine_id in medicine_ids:
-            try:
-                medicine = Medicine.objects.get(id=medicine_id)
-                medicines.append(medicine)
-            except Medicine.DoesNotExist:
-                return Response({'error': f'Medicine with ID {medicine_id} does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Create a new serializer instance with the request data
+            medicine = get_object_or_404(Medicine, id=medicine_id)
+            medicines.append(medicine)
+                    # Create a new serializer instance with the request data
         serializer = self.get_serializer(data=request.data)
         
         if serializer.is_valid(raise_exception=True):
             prescription = serializer.save()
-            # Add the related medicines to the prescription by iterating over the medicine_ids list
-            for medicine in medicines:
-                if not prescription.medicine.filter(id=medicine.id).exists():
-                    prescription.medicine.add(medicine)
+            # Add the related medicines to the prescription in bulk using set method
+            prescription.medicine.set(medicines)
             # Serialize the prescription instance to a response using a new serializer instance
             response_serializer = self.get_serializer(prescription)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
