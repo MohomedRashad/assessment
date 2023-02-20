@@ -130,17 +130,27 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         # Get the medicine IDs from the request data and remove the 'medicine' key from the request data
         medicine_ids = request.data.pop('medicine', [])
+        # Validate the medicine IDs before continuing
+        medicines = []
+        for medicine_id in medicine_ids:
+            try:
+                medicine = Medicine.objects.get(id=medicine_id)
+                medicines.append(medicine)
+            except Medicine.DoesNotExist:
+                return Response({'error': f'Medicine with ID {medicine_id} does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Create a new serializer instance with the request data
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        prescription = serializer.save()
-        # Add the related medicines to the prescription by iterating over the medicine_ids list
-        for medicine_id in medicine_ids:
-            medicine = Medicine.objects.get(id=medicine_id)
-            prescription.medicine.add(medicine)
-        # Serialize the prescription instance to a response using a new serializer instance
-        response_serializer = self.get_serializer(prescription)
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        
+        if serializer.is_valid(raise_exception=True):
+            prescription = serializer.save()
+            # Add the related medicines to the prescription by iterating over the medicine_ids list
+            for medicine in medicines:
+                if not prescription.medicine.filter(id=medicine.id).exists():
+                    prescription.medicine.add(medicine)
+            # Serialize the prescription instance to a response using a new serializer instance
+            response_serializer = self.get_serializer(prescription)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 class MedicineViewSet(viewsets.ModelViewSet):
     queryset = Medicine.objects.all()
