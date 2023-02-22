@@ -127,24 +127,15 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
     queryset = Prescription.objects.all()
     serializer_class = PrescriptionSerializer
     
-    def create(self, request, *args, **kwargs):
-        # Get the medicine IDs from the request data and remove the 'medicine' key from the request data
-        medicine_ids = request.data.pop('medicine', [])
-        # Validate the medicine IDs before continuing
+    def perform_create(self, serializer):
+        # Validate and save the medicine instances into a new dictionary before continuing
         medicines = []
-        for medicine_id in medicine_ids:
+        for medicine_id in self.request.data.pop('medicine', []):
             medicine = get_object_or_404(Medicine, id=medicine_id)
             medicines.append(medicine)
-                    # Create a new serializer instance with the request data
-        serializer = self.get_serializer(data=request.data)
-        
-        if serializer.is_valid(raise_exception=True):
-            prescription = serializer.save()
-            # Add the related medicines to the prescription in bulk using set method
-            prescription.medicine.set(medicines)
-            # Serialize the prescription instance to a response using a new serializer instance
-            response_serializer = self.get_serializer(prescription)
-            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        prescription = serializer.save()
+        # Add the related medicines to the prescription in bulk using set method
+        prescription.medicine.set(medicines)
 
 class MedicineViewSet(viewsets.ModelViewSet):
     queryset = Medicine.objects.all()
