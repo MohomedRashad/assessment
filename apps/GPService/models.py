@@ -167,6 +167,14 @@ class Prescription(models.Model):
     description = models.TextField(blank=True, null=True)
     is_accepted = models.BooleanField(default=False)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check = models.Q(appointment__isnull=True) | models.Q(form_assessment__isnull = True),
+                name='one_record_constraint'
+            )
+        ]
+
 class Order(models.Model):
     type = models.CharField(
         max_length=50,

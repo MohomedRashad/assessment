@@ -126,6 +126,16 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 class PrescriptionViewSet(viewsets.ModelViewSet):
     queryset = Prescription.objects.all()
     serializer_class = PrescriptionSerializer
+    
+    def perform_create(self, serializer):
+        # Validate and save the medicine instances into a new dictionary before continuing
+        medicines = []
+        for medicine_id in self.request.data.pop('medicine', []):
+            medicine = get_object_or_404(Medicine, id=medicine_id)
+            medicines.append(medicine)
+        prescription = serializer.save()
+        # Add the related medicines to the prescription in bulk using set method
+        prescription.medicine.add(*medicines)
 
 class MedicineViewSet(viewsets.ModelViewSet):
     queryset = Medicine.objects.all()
