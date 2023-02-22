@@ -135,7 +135,7 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
             medicines.append(medicine)
         prescription = serializer.save()
         # Add the related medicines to the prescription in bulk using set method
-        prescription.medicine.set(medicines)
+        prescription.medicine.add(*medicines)
 
 class MedicineViewSet(viewsets.ModelViewSet):
     queryset = Medicine.objects.all()
