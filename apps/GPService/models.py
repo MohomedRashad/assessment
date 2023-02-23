@@ -148,7 +148,7 @@ class FormAssessmentFeedback(models.Model):
         return self.provided_feedback
 
 class Prescription(models.Model):
-    medicine = models.ManyToManyField(Medicine, related_name='prescriptions')
+    medicines = models.ManyToManyField(Medicine, related_name='prescriptions')
     prescribed_quantity = models.PositiveIntegerField()
     appointment = models.OneToOneField(
         Appointment,
