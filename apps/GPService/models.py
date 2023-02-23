@@ -48,7 +48,7 @@ class Availability(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['starting_time', 'ending_time', 'doctor'],
+                fields = ['date', 'starting_time', 'ending_time', 'doctor'],
                 name = 'unique_appointment_slot'
             )
                     ]
@@ -116,7 +116,7 @@ class FormAssessment(models.Model):
         )
     type = models.CharField(
         max_length=20,
-choices=FormAssessmentType.choices
+        choices=FormAssessmentType.choices
     )
     is_assessed = models.BooleanField(default=False)
     created_date = models.DateTimeField(auto_now_add=True)
@@ -191,7 +191,7 @@ class Order(models.Model):
     blank=True,
     related_name='order'
     )
-    created_date = models.DateTimeField(timezone.now)
+    created_date = models.DateTimeField(auto_now_add=True)
     total_amount = models.PositiveIntegerField(blank=True, null=True)
 
 class Country(models.Model):
