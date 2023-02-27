@@ -3,8 +3,10 @@ from django.conf import settings
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import status
+
+from apps.users.models import Pharmacy
 from .models import Availability, Appointment, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Country, Order, RecommendedVaccine, FormAssessmentQuestion
-from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
+from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
 from .services import check_meeting_slot_time, create_order
@@ -295,3 +297,8 @@ class OrderViewSet(viewsets.ViewSet):
             queryset = queryset.filter(type = type)
         serializer = OrderSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class PharmacyViewSet(viewsets.ModelViewSet):
+    queryset = Pharmacy.objects.all()
+    serializer_class = PharmacySerializer
+
