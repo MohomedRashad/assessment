@@ -142,6 +142,14 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
         # Add the related medicines to the prescription in bulk using set method
         prescription.medicine.add(*medicines)
 
+    def perform_update(self, serializer):
+        validated_data = serializer.validated_data
+        # Check if the pharmacy_review_status is rejected and reason_for_rejection is not provided
+        if validated_data['pharmacy_review_status'] == 'REJECTED' and 'reason_for_rejection' not in validated_data:
+            raise ValidationError('Reason for rejection is required when pharmacy review status is rejected.')
+        else:
+            super().perform_update(serializer)
+
 class MedicineViewSet(viewsets.ModelViewSet):
     queryset = Medicine.objects.all()
     serializer_class = MedicineSerializer

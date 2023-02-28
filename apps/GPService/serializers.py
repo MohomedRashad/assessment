@@ -102,6 +102,9 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prescription
         fields = '__all__'
+        extra_kwargs = {
+            'prescribed_quantity': {'required': False},
+        }
 
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
