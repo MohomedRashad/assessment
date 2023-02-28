@@ -17,19 +17,26 @@ def create_user(validated_data):
     validated_data['username'] = validated_data['email']
     if validated_data.get('role') == 'PHARMACY':
         # Check if required fields are provided for the pharmacy user type
-        if not all([validated_data.get('name'), validated_data.get('address'), validated_data.get('phone'), validated_data.get('postal_code')]):
-            raise ValidationError('Please provide name, address, phone, and postal code for pharmacy users')
-    instance = get_user_model().objects.create(first_name = validated_data['first_name'], last_name = validated_data['last_name'], username = validated_data['email'], role = validated_data['role'])
-    instance.set_password(validated_data['password'])
-    instance.save()
-    Pharmacy.objects.create(user = instance, name = validated_data['name'], address = validated_data['address'], phone = validated_data['phone'], postal_code = validated_data['postal_code'])
+        if not all([validated_data.get('pharmacy_name'), validated_data.get('postal_code')]):
+            raise ValidationError('Please provide pharmacy name, and postal code for pharmacy users')
+        else:
+            #creating a user instance and a pharmacy instance associated with the newly created user.
+            instance = get_user_model().objects.create(first_name = validated_data['first_name'], last_name = validated_data['last_name'], username = validated_data['email'], role = validated_data['role'])
+            instance.set_password(validated_data['password'])
+            instance.save()
+            Pharmacy.objects.create(user = instance, name = validated_data['pharmacy_name'], postal_code = validated_data['postal_code'])
+    else:
+        #creating a regular user
+        instance = get_user_model().objects.create(first_name = validated_data['first_name'], last_name = validated_data['last_name'], username = validated_data['email'], role = validated_data['role'])
+        instance.set_password(validated_data['password'])
+        instance.save()
     return instance
 
 class AuthRegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(required=True, write_only=True, min_length=6)
     class Meta:
         model = get_user_model()
-        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role', 'name', 'address', 'phone', 'postal_code']
+        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role', 'pharmacy_name', 'postal_code']
         extra_kwargs = {
             'id': {'read_only': True},
             'first_name': {'required': True},
@@ -37,9 +44,7 @@ class AuthRegisterSerializer(serializers.ModelSerializer):
             'email': {'required': True},
             'password': {'write_only': True, 'min_length': 6},
             'role': {'required': True},
-            'name': {'required': False},
-            'address': {'required': False},
-            'phone': {'required': False},
+            'pharmacy_name': {'required': False},
             'postal_code': {'required': False},
         }
 
@@ -60,14 +65,12 @@ class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(required=True, write_only=True, min_length=6)
     email = serializers.CharField(write_only=True)
-    name = serializers.CharField(required=False)
-    address = serializers.CharField(required=False)
-    phone = serializers.CharField(required=False)
+    pharmacy_name = serializers.CharField(required=False)
     postal_code = serializers.CharField(required=False)
 
     class Meta:
         model = get_user_model()
-        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role', 'name', 'address', 'phone', 'postal_code']
+        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role', 'pharmacy_name', 'postal_code']
         extra_kwargs = {
             'id': {'read_only': True},
             'first_name': {'required': True},
@@ -75,9 +78,7 @@ class UserSerializer(serializers.ModelSerializer):
             'email': {'required': True},
             'password': {'write_only': True, 'min_length': 6},
             'role': {'required': True},
-            'name': {'required': False},
-            'address': {'required': False},
-            'phone': {'required': False},
+            'pharmacy_name': {'required': False},
             'postal_code': {'required': False},
         }
 

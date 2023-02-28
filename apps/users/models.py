@@ -59,7 +59,6 @@ class UserEmailVerification(models.Model):
         ordering = ['-created_at']
 
 class Pharmacy(models.Model):
-    id = models.BigAutoField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='pharmacy')
     name = models.CharField(max_length = 100)
     address = models.TextField()
