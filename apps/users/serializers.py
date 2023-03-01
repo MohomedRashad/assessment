@@ -8,24 +8,37 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from apps.users.error_codes import AccountErrorCodes
+from apps.users.models import Pharmacy, Roles
 from project import settings
 
-
 def create_user(validated_data):
+    # Check if required fields are provided for the pharmacy user type
+    if validated_data.get('role') == Roles.PHARMACY and not all([validated_data.get('pharmacy_name'), validated_data.get('postal_code')]):
+        raise ValidationError('Please provide pharmacy name and postal code for pharmacy users')
+
     validated_data.pop('confirm_password')
     validated_data['username'] = validated_data['email']
-    instance = get_user_model().objects.create(**validated_data)
+    instance = get_user_model().objects.create(
+        first_name=validated_data['first_name'],
+        last_name=validated_data['last_name'],
+        username = validated_data['email'],
+        role = validated_data['role']
+    )
     instance.set_password(validated_data['password'])
     instance.save()
-    return instance
 
+    if validated_data['role'] == Roles.PHARMACY:
+        # Create a pharmacy object for the created user
+        Pharmacy.objects.create(user=instance, name= validated_data['pharmacy_name'], postal_code = validated_data['postal_code'])
+    return instance
 
 class AuthRegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(required=True, write_only=True, min_length=6)
-
+    pharmacy_name = serializers.CharField(required=False)
+    postal_code = serializers.CharField(required=False)
     class Meta:
         model = get_user_model()
-        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role']
+        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role', 'pharmacy_name', 'postal_code']
         extra_kwargs = {
             'id': {'read_only': True},
             'first_name': {'required': True},
@@ -33,6 +46,8 @@ class AuthRegisterSerializer(serializers.ModelSerializer):
             'email': {'required': True},
             'password': {'write_only': True, 'min_length': 6},
             'role': {'required': True},
+            'pharmacy_name': {'required': False},
+            'postal_code': {'required': False},
         }
 
     def validate_confirm_password(self, val):
@@ -59,9 +74,15 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = [
-            'id', 'first_name', 'last_name', 'email', 'password', 'role'
-        ]
+        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role', 'pharmacy_name', 'postal_code']
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+            'email': {'required': True},
+            'password': {'write_only': True, 'min_length': 6},
+            'role': {'required': True},
+        }
 
     def create(self, validated_data):
         try:

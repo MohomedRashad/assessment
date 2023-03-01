@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 from datetime import timedelta
+from django.db.models import BigAutoField
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from django.core.exceptions import ImproperlyConfigured
@@ -255,3 +256,5 @@ ZAPPA_AWS_REGION = os.getenv('ZAPPA_AWS_REGION', '')
 TEST_RUNNER = 'project.pytest_runner.PytestTestRunner'
 
 FORM_ASSESSMENT_AMOUNT = 1500
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

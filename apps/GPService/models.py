@@ -8,7 +8,7 @@ from unittest.util import _MAX_LENGTH
 from django.db import models
 from django.utils import timezone
 from django.db.models import Q
-from apps.users.models import User
+from apps.users.models import Pharmacy, User
 from apps.files.models import File
 from rest_framework.exceptions import ValidationError
 
@@ -31,7 +31,11 @@ class FormAssessmentType(models.TextChoices):
 class OrderType(models.TextChoices):
     FORM_ASSESSMENT = 'FORM_ASSESSMENT', _('FORM_ASSESSMENT')
     VIDEO_ASSESSMENT = 'VIDEO_ASSESSMENT', _('VIDEO_ASSESSMENT')
-    PRESCRIPTION = 'PRESCRIPTION', _('PRESCRIPTION')
+
+class PharmacyReviewStatus(models.TextChoices):
+    ACCEPTED = 'ACCEPTED', _('ACCEPTED')
+    REJECTED = 'REJECTED', _('REJECTED')
+    PENDING = 'PENDING', _('PENDING')
 
 #Models
 class Availability(models.Model):
@@ -166,6 +170,19 @@ class Prescription(models.Model):
         )
     description = models.TextField(blank=True, null=True)
     is_accepted = models.BooleanField(default=False)
+    pharmacy = models.OneToOneField(
+        Pharmacy,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        related_name='prescription'
+        )
+    pharmacy_review_status = models.CharField(
+        max_length=15,
+        choices = PharmacyReviewStatus.choices,
+        default= PharmacyReviewStatus.PENDING
+        )
+    reason_for_rejection = models.TextField(blank=True, null=True)
 
     class Meta:
         constraints = [
@@ -174,6 +191,7 @@ class Prescription(models.Model):
                 name='one_record_constraint'
             )
         ]
+
 
 class Order(models.Model):
     type = models.CharField(

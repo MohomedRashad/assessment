@@ -50,7 +50,7 @@ class UserEmailVerification(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='email_verifications'
     )
-    code = models.PositiveIntegerField(max_length=6)
+    code = models.PositiveIntegerField()
     verified = models.BooleanField(default=False)
     verified_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -59,12 +59,13 @@ class UserEmailVerification(models.Model):
         ordering = ['-created_at']
 
 class Pharmacy(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pharmacies')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='pharmacy')
+    name = models.CharField(max_length = 100)
     address = models.TextField()
     phone = models.CharField(
         max_length=15,
         null=True,
         blank=True
         )
-    postal_code = models.IntegerField()
+    postal_code = models.PositiveIntegerField()
     is_active = models.BooleanField(default=True)
