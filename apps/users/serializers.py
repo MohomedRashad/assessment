@@ -11,21 +11,30 @@ from apps.users.error_codes import AccountErrorCodes
 from apps.users.models import Pharmacy
 from project import settings
 
-
 def create_user(validated_data):
+    role = validated_data.get('role')
+    pharmacy_name = validated_data.get('pharmacy_name')
+    postal_code = validated_data.get('postal_code')
+
+    # Check if required fields are provided for the pharmacy user type
+    if role == 'PHARMACY' and not all([pharmacy_name, postal_code]):
+        raise ValidationError('Please provide pharmacy name and postal code for pharmacy users')
+
     validated_data.pop('confirm_password')
     validated_data['username'] = validated_data['email']
-    instance = get_user_model().objects.create(first_name = validated_data['first_name'], last_name = validated_data['last_name'], username = validated_data['email'], role = validated_data['role'])
+    instance = get_user_model().objects.create(
+        first_name=validated_data['first_name'],
+        last_name=validated_data['last_name'],
+        username=validated_data['email'],
+        role=role
+    )
     instance.set_password(validated_data['password'])
     instance.save()
-    if validated_data.get('role') == 'PHARMACY':
-        # Check if required fields are provided for the pharmacy user type
-        if not all([validated_data.get('pharmacy_name'), validated_data.get('postal_code')]):
-            instance.delete() #deleting the already created user instance before raising an error
-            raise ValidationError('Please provide pharmacy name, and postal code for pharmacy users')
-        else:
-            #creating a pharmacy object for the created user.
-            Pharmacy.objects.create(user = instance, name = validated_data['pharmacy_name'], postal_code = validated_data['postal_code'])
+
+    if role == 'PHARMACY':
+        # Create a pharmacy object for the created user
+        Pharmacy.objects.create(user=instance, name=pharmacy_name, postal_code=postal_code)
+
     return instance
 
 class AuthRegisterSerializer(serializers.ModelSerializer):
