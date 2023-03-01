@@ -104,6 +104,9 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {
             'prescribed_quantity': {'required': False},
+            'pharmacy': {'required': False},
+            'pharmacy_review_status': {'required': False},
+            'reason_for_rejection': {'required': False},
         }
 
 class OrderSerializer(serializers.ModelSerializer):

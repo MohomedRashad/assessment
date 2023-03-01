@@ -8,7 +8,7 @@ from unittest.util import _MAX_LENGTH
 from django.db import models
 from django.utils import timezone
 from django.db.models import Q
-from apps.users.models import User
+from apps.users.models import Pharmacy, User
 from apps.files.models import File
 from rest_framework.exceptions import ValidationError
 
@@ -170,6 +170,13 @@ class Prescription(models.Model):
         )
     description = models.TextField(blank=True, null=True)
     is_accepted = models.BooleanField(default=False)
+    pharmacy = models.OneToOneField(
+        Pharmacy,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        related_name='prescription'
+        )
     pharmacy_review_status = models.CharField(
         max_length=15,
         choices = PharmacyReviewStatus.choices,
