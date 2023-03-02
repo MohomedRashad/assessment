@@ -74,7 +74,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role', 'pharmacy_name', 'postal_code']
+        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'role']
         extra_kwargs = {
             'id': {'read_only': True},
             'first_name': {'required': True},
@@ -123,7 +123,7 @@ class PasswordChangeSerializer(serializers.ModelSerializer):
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ['first_name', 'last_name', 'phone']
+        fields = ['first_name', 'last_name']
 
 
 class UserRequestResetPasswordSerializer(serializers.Serializer):
