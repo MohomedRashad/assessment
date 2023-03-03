@@ -5,7 +5,7 @@ from django.http import Http404
 from rest_framework import status
 
 from apps.users.models import Pharmacy
-from .models import Availability, Appointment, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Country, Order, RecommendedVaccine, FormAssessmentQuestion
+from .models import Availability, Appointment, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Country, Order, OrderType, RecommendedVaccine, FormAssessmentQuestion
 from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
@@ -20,7 +20,6 @@ from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppoi
 class AvailabilityViewSet(viewsets.ModelViewSet):
     queryset = Availability.objects.all()
     serializer_class = AvailabilitySerializer
-
 
     def perform_create(self, serializer):
         starting_time = datetime.strptime(self.request.data.get('starting_time'), '%H:%M:%S')
@@ -37,7 +36,6 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
             raise ValidationError("The duration of the availability slot should exactly be 15 minutes")
         else:
             serializer.save(doctor=self.request.user)
-
 
     def perform_update(self, serializer):
         availability = self.get_object()
@@ -58,7 +56,6 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
                 raise ValidationError("This availability instance has already been added before")
         else:
             super().perform_update(serializer)
-
 
     def perform_destroy(self, instance):
         availability = self.get_object()
@@ -140,7 +137,7 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
             medicines.append(medicine)
         prescription = serializer.save()
         # Add the related medicines to the prescription in bulk using set method
-        prescription.medicine.add(*medicines)
+        prescription.medicines.add(*medicines)
 
     def perform_update(self, serializer):
         validated_data = serializer.validated_data
@@ -260,7 +257,7 @@ class FormAssessmentViewSet(viewsets.ViewSet):
             #assumption: only the doctor user type can invoke the modification of a form assessment
             #A form assessment will only be updated when a doctor performs an assessment of an existing form.
             form_assessment = get_object_or_404(FormAssessment, pk = form_assessment_id)
-            if form_assessment.is_assessed != form_assessment.doctor == self.request.user:
+            if form_assessment.is_assessed and form_assessment.doctor != self.request.user:
                 raise ValidationError("This form assessment has already been assessed by another doctor")
             else:
                     #updating the form assessment instance with the doctor details
@@ -279,7 +276,7 @@ class FormAssessmentViewSet(viewsets.ViewSet):
                         serializer.save()
                     #Creating the order for assessed form assessment
                     order = {'form_assessment': form_assessment}
-                    create_order('FORM_ASSESSMENT', settings.FORM_ASSESSMENT_AMOUNT, **order)
+                    create_order(OrderType.FORM_ASSESSMENT, settings.FORM_ASSESSMENT_AMOUNT, **order)
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-feedbacks/(?P<form_assessment_feedback_id>\d+)')
