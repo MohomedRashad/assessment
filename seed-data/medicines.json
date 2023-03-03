@@ -1,0 +1,122 @@
+[
+{
+    "model": "GPService.medicine",
+    "pk": 1,
+    "fields": {
+        "name": "Paracetamol",
+        "type": "TABLET",
+        "available_quantity": 10,
+        "price": "100.00"
+    }
+},
+{
+    "model": "GPService.medicine",
+    "pk": 2,
+    "fields": {
+        "name": "Ibuprofen",
+        "type": "TABLET",
+        "available_quantity": 10,
+        "price": "100.00"
+    }
+},
+{
+    "model": "GPService.medicine",
+    "pk": 3,
+    "fields": {
+        "name": "Amoxicillin",
+        "type": "TABLET",
+        "available_quantity": 10,
+        "price": "100.00"
+    }
+},
+{
+    "model": "GPService.medicine",
+    "pk": 4,
+    "fields": {
+        "name": "Aspirin",
+        "type": "TABLET",
+        "available_quantity": 10,
+        "price": "100.00"
+    }
+},
+{
+    "model": "GPService.medicine",
+    "pk": 5,
+    "fields": {
+        "name": "Ciprofloxacin",
+        "type": "TABLET",
+        "available_quantity": 10,
+        "price": "100.00"
+    }
+},
+{
+    "model": "GPService.medicine",
+    "pk": 6,
+    "fields": {
+        "name": "Metformin",
+        "type": "TABLET",
+        "available_quantity": 10,
+        "price": "100.00"
+    }
+},
+{
+    "model": "GPService.medicine",
+    "pk": 7,
+    "fields": {
+        "name": "Atenolol",
+        "type": "TABLET",
+        "available_quantity": 10,
+        "price": "100.00"
+    }
+},
+{
+    "model": "GPService.medicine",
+    "pk": 8,
+    "fields": {
+        "name": "Simvastatin",
+        "type": "TABLET",
+        "available_quantity": 10,
+        "price": "100.00"
+    }
+},
+{
+    "model": "GPService.medicine",
+    "pk": 9,
+    "fields": {
+        "name": "Lisinopril",
+        "type": "TABLET",
+        "available_quantity": 10,
+        "price": "100.00"
+    }
+},
+{
+    "model": "GPService.medicine",
+    "pk": 10,
+    "fields": {
+        "name": "Azithromycin",
+        "type": "TABLET",
+        "available_quantity": 10,
+        "price": "100.00"
+    }
+},
+{
+    "model": "GPService.medicine",
+    "pk": 11,
+    "fields": {
+        "name": "tab1",
+        "type": "TABLET",
+        "available_quantity": 10,
+        "price": "100.00"
+    }
+},
+{
+    "model": "GPService.medicine",
+    "pk": 12,
+    "fields": {
+        "name": "tab2",
+        "type": "TABLET",
+        "available_quantity": 10,
+        "price": "100.00"
+    }
+}
+]
