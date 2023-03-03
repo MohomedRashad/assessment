@@ -90,4 +90,4 @@ class UserViewSet(ModelViewSet):
             serializer = ProfileUpdateSerializer(data=request.data, instance=request.user, partial=True)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
-            return serializer.data
+            return Response(serializer.data)
