@@ -81,11 +81,11 @@ class UserViewSet(ModelViewSet):
     def filter_queryset(self, queryset):
         return queryset.filter(Q(is_active=True) & ~Q(role=Roles.SUPER_ADMIN))
 
-    @action(detail=False, methods=['get', 'put', 'patch'])
+    @action(detail=False, methods = ['get', 'put', 'patch'])
     def me(self, request):
-        if request.method == 'get':
+        if request.method == 'GET':
             serializer = UserSerializer(request.user)
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             serializer = ProfileUpdateSerializer(data=request.data, instance=request.user, partial=True)
             if serializer.is_valid(raise_exception=True):
