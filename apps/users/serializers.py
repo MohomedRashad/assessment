@@ -69,34 +69,16 @@ class AuthRegisterSerializer(serializers.ModelSerializer):
             raise ValidationError(AccountErrorCodes.USER_EXIST)
 
 class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
-    email = serializers.CharField(write_only=True)
-
     class Meta:
         model = get_user_model()
-        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role', 'pharmacy_name', 'postal_code']
+        fields = ['id', 'first_name', 'last_name', 'email', 'role']
         extra_kwargs = {
             'id': {'read_only': True},
             'first_name': {'required': True},
             'last_name': {'required': True},
-            'email': {'required': True},
-            'password': {'write_only': True, 'min_length': 6},
-            'role': {'required': True},
+            'email': {'read_only': True},
+            'role': {'read_only': True},
         }
-
-    def create(self, validated_data):
-        try:
-            return create_user(validated_data)
-        except django.db.utils.IntegrityError:
-            raise django.db.utils.IntegrityError(AccountErrorCodes.USER_EXIST)
-
-    def update(self, instance, validated_data):
-        if 'password' in validated_data:
-            validated_data.pop('password')
-        if 'email' in validated_data:
-            validated_data['username'] = validated_data['email']
-        return super().update(instance, validated_data)
-
 
 class PasswordChangeSerializer(serializers.ModelSerializer):
     old_password = serializers.CharField(required=True)
@@ -123,8 +105,14 @@ class PasswordChangeSerializer(serializers.ModelSerializer):
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ['first_name', 'last_name', 'phone']
-
+        fields = ['id', 'first_name', 'last_name', 'email', 'role']
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+            'email': {'read_only': True},
+            'role': {'read_only': True},
+        }
 
 class UserRequestResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
