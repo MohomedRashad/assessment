@@ -3,9 +3,8 @@ from django.conf import settings
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import status
-
 from apps.users.models import Pharmacy
-from .models import Availability, Appointment, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Country, Order, OrderType, RecommendedVaccine, FormAssessmentQuestion
+from .models import AppointmentStatus, Availability, OrderType, PharmacyReviewStatus, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
 from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
@@ -107,11 +106,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         availability = get_object_or_404(Availability, id = appointment.availability.id)
         if not 'status' in self.request.data:
             raise ValidationError("The status has not been provided")
-        elif appointment.status == 'COMPLETED':
+        elif appointment.status == AppointmentStatus.COMPLETED:
             raise ValidationError("This appointment cannot be modified as it has already been completed")
-        elif self.request.data['status'] == 'CANCELED':
+        elif self.request.data['status'] == AppointmentStatus.CANCELED:
             #An appointment can be deleted only if the current status is set to 'BOOKED'
-            if appointment.status == 'ONGOING':
+            if appointment.status == AppointmentStatus.ONGOING:
                 raise ValidationError("This appointment cannot be deleted, as it is ongoing at the moment")
             else:
                     #Updating the availability status to not booked.
@@ -120,10 +119,17 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                         #Setting the appointment status to 'CANCELED'
                     super().perform_update(serializer)
         else:
-            #Creating the order for the completed appointment
-            order = {'appointment': appointment}
-            create_order('VIDEO_ASSESSMENT', availability.doctor_charge, **order)
-            super().perform_update(serializer)
+            #a condition to check whether the appointment status is ONGOING or COMPLETED
+            if self.request.data['status'] == AppointmentStatus.ONGOING:
+                #Setting the appointment status to ONGOING
+                super().perform_update(serializer)
+            elif self.request.data['status'] == AppointmentStatus.COMPLETED:
+                #Since the appointment status is completed, an order should be created for the appointment instance
+                #Creating the order for the completed appointment
+                order = {'appointment': appointment}
+                create_order(OrderType.VIDEO_ASSESSMENT, availability.doctor_charge, **order)
+                #Setting the appointment status to COMPLETED.
+                super().perform_update(serializer)
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
     queryset = Prescription.objects.all()

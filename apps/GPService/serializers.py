@@ -21,9 +21,10 @@ class AddAppointmentSerializer(serializers.ModelSerializer):
         exclude = ('patient', 'status')
 
 class UpdateAppointmentStatusSerializer(serializers.ModelSerializer):
+    availability = AvailabilitySerializer(read_only=True)
     class Meta:
         model = Appointment
-        fields = ['id', 'status']
+        fields = ['id', 'availability', 'status']
 
 class MedicineSerializer(serializers.ModelSerializer):
     class Meta:
