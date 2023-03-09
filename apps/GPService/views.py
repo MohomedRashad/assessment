@@ -3,7 +3,7 @@ from django.conf import settings
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import status
-from apps.GPService.permissions import DoctorOrReadOnly
+from apps.users.permissions import DoctorOrReadOnly
 
 from apps.users.models import Pharmacy
 from .models import Availability, Appointment, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Country, Order, OrderType, RecommendedVaccine, FormAssessmentQuestion
