@@ -3,6 +3,7 @@ from django.conf import settings
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import status
+from apps.GPService.permissions import DoctorOrReadOnly
 
 from apps.users.models import Pharmacy
 from .models import Availability, Appointment, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Country, Order, OrderType, RecommendedVaccine, FormAssessmentQuestion
@@ -20,6 +21,7 @@ from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppoi
 class AvailabilityViewSet(viewsets.ModelViewSet):
     queryset = Availability.objects.all()
     serializer_class = AvailabilitySerializer
+    permission_classes = [DoctorOrReadOnly]
 
     def perform_create(self, serializer):
         starting_time = datetime.strptime(self.request.data.get('starting_time'), '%H:%M:%S')
