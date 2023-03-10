@@ -3,7 +3,7 @@ from django.conf import settings
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import status
-from apps.users.permissions import DoctorOrReadOnly
+from apps.users.permissions import DoctorOrReadOnly, PatientOrReadOnly
 from apps.users.models import Pharmacy
 from .models import AppointmentStatus, Availability, OrderType, PharmacyReviewStatus, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
 from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
@@ -186,6 +186,20 @@ class FormAssessmentQuestionViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class FormAssessmentViewSet(viewsets.ViewSet):
+    permission_classes = [PatientOrReadOnly]
+    
+    def get_permissions(self):
+        if self.action == 'create_form_assessment':
+            return [PatientOrReadOnly()]
+        elif self.action == 'update_form_assessment_answers':
+            return [PatientOrReadOnly()]
+        elif self.action == 'form_assessment_feedback':
+            return [DoctorOrReadOnly()]
+        elif self.action == 'update_form_assessment_feedback':
+            return [DoctorOrReadOnly()]
+        else:
+            return [PatientOrReadOnly()]
+
     def list(self, request):
         #Returns a list of form assessments of the current patient
         form_assessment_type = self.request.query_params.get('type')
