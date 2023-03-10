@@ -72,3 +72,25 @@ class DoctorOrReadOnly(BasePermission):
 
         # Only allow the specific doctor to update or delete their own availability
         return obj.doctor == request.user
+
+class PharmacyOrReadOnly(BasePermission):
+    """
+    Custom permission to only allow pharmacies to add and edit their medicines.
+    """
+
+    def has_permission(self, request, view):
+        # Allow all authenticated users to view medicines
+        if request.method in SAFE_METHODS:
+            return True
+
+        # Only allow pharmacies to create availabilities
+        return request.user.role == Roles.PHARMACY
+
+    def has_object_permission(self, request, view, obj):
+        # Allow all authenticated users to view medicines
+        if request.method in SAFE_METHODS:
+            return True
+
+        # Only allow the specific pharmacy to update or delete their own medicine
+        return request.user.role == Roles.PHARMACY
+
