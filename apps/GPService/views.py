@@ -70,6 +70,7 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
 class AppointmentViewSet(viewsets.ModelViewSet):
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
+    permission_classes = [PatientOrReadOnly]
 
     def get_serializer_class(self):
         if self.action == 'update' or self.action == 'destroy':

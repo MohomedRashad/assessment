@@ -66,7 +66,7 @@ class DoctorOrReadOnly(BasePermission):
         return request.user.role == Roles.DOCTOR
 
     def has_object_permission(self, request, view, obj):
-        # Allow all authenticated users to view doctor availabilities
+        # Allow all authenticated users to view doctor availability
         if request.method in SAFE_METHODS:
             return True
 
