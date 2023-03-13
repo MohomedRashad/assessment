@@ -315,4 +315,5 @@ class PharmacyViewSet(viewsets.ModelViewSet):
     queryset = Pharmacy.objects.all()
     serializer_class = PharmacySerializer
     permission_classes = [PharmacyOrReadOnly]
+    http_method_names = ['get', 'head', 'put', 'patch', 'options']
 
