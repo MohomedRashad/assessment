@@ -95,3 +95,24 @@ class SystemAdminOrReadOnly(BasePermission):
         # Allow superusers to edit the medicine instance
         if request.user.role == Roles.SUPER_ADMIN:
             return True
+
+class PatientOrReadOnly(BasePermission):
+    """
+    Custom permission to only allow patients to add and edit their appointments.
+    """
+
+    def has_permission(self, request, view):
+        # Allow all authenticated users to view appointments
+        if request.method in SAFE_METHODS:
+            return True
+
+        # Only allow patients to create appointments
+        return request.user.role == Roles.PATIENT
+
+    def has_object_permission(self, request, view, obj):
+        # Allow all authenticated users to view appointments
+        if request.method in SAFE_METHODS:
+            return True
+
+        # Only allow the specific patient to update or delete their own appointment
+        return obj.patient == request.user
