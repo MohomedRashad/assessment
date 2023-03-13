@@ -73,9 +73,9 @@ class DoctorOrReadOnly(BasePermission):
         # Only allow the specific doctor to update or delete their own availability
         return obj.doctor == request.user
 
-class PharmacyOrReadOnly(BasePermission):
+class SystemAdminOrReadOnly(BasePermission):
     """
-    Custom permission to only allow pharmacies to add and edit their medicines.
+    Custom permission to only allow admins of the system to add and edit medicines.
     """
 
     def has_permission(self, request, view):
@@ -83,14 +83,15 @@ class PharmacyOrReadOnly(BasePermission):
         if request.method in SAFE_METHODS:
             return True
 
-        # Only allow pharmacies to create availabilities
-        return request.user.role == Roles.PHARMACY
+        # Allow superusers to perform non-safe methods
+        if request.user.role == Roles.SUPER_ADMIN:
+            return True
 
     def has_object_permission(self, request, view, obj):
-        # Allow all authenticated users to view medicines
+        # Allow all authenticated users to view m   edicines
         if request.method in SAFE_METHODS:
             return True
 
-        # Only allow the specific pharmacy to update or delete their own medicine
-        return request.user.role == Roles.PHARMACY
-
+        # Allow superusers to edit the medicine instance
+        if request.user.role == Roles.SUPER_ADMIN:
+            return True
