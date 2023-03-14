@@ -1,9 +1,10 @@
 from rest_framework import viewsets
+from rest_framework.exceptions import MethodNotAllowed
 from django.conf import settings
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import status
-from apps.users.permissions import DoctorOrReadOnly, PatientOrReadOnly, SystemAdminOrReadOnly
+from apps.users.permissions import DoctorOrReadOnly, PatientOrReadOnly, SystemAdminOrReadOnly, PharmacyOrReadOnly
 from apps.users.models import Pharmacy
 from .models import AppointmentStatus, Availability, OrderType, PharmacyReviewStatus, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
 from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
@@ -318,4 +319,7 @@ class OrderViewSet(viewsets.ViewSet):
 class PharmacyViewSet(viewsets.ModelViewSet):
     queryset = Pharmacy.objects.all()
     serializer_class = PharmacySerializer
+    permission_classes = [PharmacyOrReadOnly]
 
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed("POST", detail="Creating new pharmacies is not allowed.")
