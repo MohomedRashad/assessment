@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.exceptions import MethodNotAllowed
 from django.conf import settings
 from rest_framework.views import APIView
 from django.http import Http404
@@ -317,5 +318,6 @@ class PharmacyViewSet(viewsets.ModelViewSet):
     queryset = Pharmacy.objects.all()
     serializer_class = PharmacySerializer
     permission_classes = [PharmacyOrReadOnly]
-    http_method_names = ['get', 'head', 'put', 'patch', 'options']
 
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed("POST", detail="Creating new pharmacies is not allowed.")
