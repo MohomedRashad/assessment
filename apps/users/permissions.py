@@ -53,84 +53,53 @@ class NotAllowed(BasePermission):
         raise PermissionDenied()
 
 class DoctorOrReadOnly(BasePermission):
-    """
-    Custom permission to only allow doctors to edit their availability.
-    """
-
     def has_permission(self, request, view):
-        # Allow all authenticated users to view doctor availabilities
-        if request.method in SAFE_METHODS:
+        if request.method in SAFE_METHODS and request.user.role != Roles.PHARMACY:
             return True
 
-        # Only allow doctors to create availabilities
         return request.user.role == Roles.DOCTOR
 
     def has_object_permission(self, request, view, obj):
-        # Allow all authenticated users to view doctor availability
-        if request.method in SAFE_METHODS:
+        if request.method in SAFE_METHODS and request.user.role != Roles.PHARMACY:
             return True
 
-        # Only allow the specific doctor to update or delete their own availability
         return obj.doctor == request.user
 
 class PharmacyOrReadOnly(BasePermission):
-    """
-    Custom permission to only allow pharmacies to edit their details.
-    """
-
     def has_permission(self, request, view):
-        # Allow all authenticated users to view pharmacies
         if request.method in SAFE_METHODS:
             return True
 
     def has_object_permission(self, request, view, obj):
-        # Allow all authenticated users to view pharmacies
         if request.method in SAFE_METHODS:
             return True
 
-        # Only allow the specific pharmacy user to update their own pharmacy details
         return obj.user == request.user
 
 class SystemAdminOrReadOnly(BasePermission):
-    """
-    Custom permission to only allow admins of the system to add and edit medicines.
-    """
-
     def has_permission(self, request, view):
-        # Allow all authenticated users to view medicines
         if request.method in SAFE_METHODS:
             return True
 
-        # Allow superusers to perform non-safe methods
         if request.user.role == Roles.SUPER_ADMIN:
             return True
 
     def has_object_permission(self, request, view, obj):
-        # Allow all authenticated users to view m   edicines
         if request.method in SAFE_METHODS:
             return True
 
-        # Allow superusers to edit the medicine instance
         if request.user.role == Roles.SUPER_ADMIN:
             return True
 
 class PatientOrReadOnly(BasePermission):
-    """
-    Custom permission to only allow patients to add and edit their appointments.
-    """
-
     def has_permission(self, request, view):
-        # Allow all authenticated users to view appointments
-        if request.method in SAFE_METHODS:
+        if request.method in SAFE_METHODS and request.user.role != Roles.PHARMACY:
             return True
 
-        # Only allow patients to create appointments
         return request.user.role == Roles.PATIENT
 
     def has_object_permission(self, request, view, obj):
-        # Allow all authenticated users to view appointments
-        if request.method in SAFE_METHODS:
+        if request.method in SAFE_METHODS and request.user.role != Roles.PHARMACY:
             return True
 
-        # Only allow the specific patient to update or delete their own appointment
         return obj.patient == request.user
