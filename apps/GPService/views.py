@@ -4,7 +4,7 @@ from django.conf import settings
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import status
-from apps.users.permissions import DoctorOrPatientReadOnlyPermission, PatientOrDoctorReadOnlyPermission, SystemAdminOrReadOnly, PharmacyOrReadOnly
+from apps.users.permissions import AllowDoctorsToHaveFullControl, SystemAdminOrReadOnly, PharmacyOrReadOnly, AllowPatientsToHaveFullControl
 from apps.users.models import Pharmacy
 from .models import AppointmentStatus, Availability, OrderType, PharmacyReviewStatus, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
 from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
@@ -21,7 +21,7 @@ from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppoi
 class AvailabilityViewSet(viewsets.ModelViewSet):
     queryset = Availability.objects.all()
     serializer_class = AvailabilitySerializer
-    permission_classes = [DoctorOrPatientReadOnlyPermission]
+    permission_classes = [AllowDoctorsToHaveFullControl]
 
     def perform_create(self, serializer):
         starting_time = datetime.strptime(self.request.data.get('starting_time'), '%H:%M:%S')
@@ -71,7 +71,7 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
 class AppointmentViewSet(viewsets.ModelViewSet):
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
-    permission_classes = [PatientOrDoctorReadOnlyPermission]
+    permission_classes = [AllowPatientsToHaveFullControl]
 
     def get_serializer_class(self):
         if self.action == 'update' or self.action == 'destroy':
@@ -189,7 +189,7 @@ class FormAssessmentQuestionViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class FormAssessmentViewSet(viewsets.ViewSet):
-    permission_classes = [PatientOrDoctorReadOnlyPermission]
+    permission_classes = [AllowPatientsToHaveFullControl]
     
     def list(self, request):
         #Returns a list of form assessments of the current patient
@@ -207,7 +207,7 @@ class FormAssessmentViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @transaction.atomic
-    @action(methods=['post'], detail=False, url_path='form-assessment-answers', permission_classes=[PatientOrDoctorReadOnlyPermission])
+    @action(methods=['post'], detail=False, url_path='form-assessment-answers', permission_classes=[AllowPatientsToHaveFullControl])
     def create_form_assessment(self, request):
         answer_data = [] #a dictionary of answers which will be added to the database at once.
         if not 'type' in self.request.data:
@@ -235,7 +235,7 @@ class FormAssessmentViewSet(viewsets.ViewSet):
             return_serializer = ViewFormAssessmentSerializer(queryset)
             return Response(return_serializer.data, status=status.HTTP_201_CREATED)
             
-    @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-answers', permission_classes=[PatientOrDoctorReadOnlyPermission])
+    @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-answers', permission_classes=[AllowPatientsToHaveFullControl])
     def update_form_assessment_answers(self, request, form_assessment_id):
         updated_answers = [] #a dictionary of answers which will be updated at once.
         if not 'answers' in self.request.data:
@@ -258,7 +258,7 @@ class FormAssessmentViewSet(viewsets.ViewSet):
 
 
     @transaction.atomic
-    @action(methods=['get', 'post'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-feedbacks', permission_classes=[DoctorOrPatientReadOnlyPermission])
+    @action(methods=['get', 'post'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-feedbacks', permission_classes=[AllowDoctorsToHaveFullControl])
     def form_assessment_feedback(self, request, form_assessment_id):
         if request.method == 'GET':
             #Returns the feedbacks of a given form assessment
@@ -292,7 +292,7 @@ class FormAssessmentViewSet(viewsets.ViewSet):
                     create_order(OrderType.FORM_ASSESSMENT, settings.FORM_ASSESSMENT_AMOUNT, **order)
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-feedbacks/(?P<form_assessment_feedback_id>\d+)', permission_classes=[DoctorOrPatientReadOnlyPermission])
+    @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-feedbacks/(?P<form_assessment_feedback_id>\d+)', permission_classes=[AllowDoctorsToHaveFullControl])
     def update_form_assessment_feedback(self, request, form_assessment_id, form_assessment_feedback_id):
         form_assessment = get_object_or_404(FormAssessment, pk = form_assessment_id)
         if not 'provided_feedback' in self.request.data:

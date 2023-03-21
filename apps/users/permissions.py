@@ -52,7 +52,7 @@ class NotAllowed(BasePermission):
     def has_permission(self, request, view):
         raise PermissionDenied()
 
-class DoctorOrPatientReadOnlyPermission(BasePermission):
+class AllowDoctorsToHaveFullControl(BasePermission):
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS and request.user.role != Roles.PHARMACY:
             return True
@@ -91,7 +91,7 @@ class SystemAdminOrReadOnly(BasePermission):
         if request.user.role == Roles.SUPER_ADMIN:
             return True
 
-class PatientOrDoctorReadOnlyPermission(BasePermission):
+class AllowPatientsToHaveFullControl(BasePermission):
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS and request.user.role != Roles.PHARMACY:
             return True
