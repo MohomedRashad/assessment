@@ -25,7 +25,7 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser:
+        if user.role == Roles.SUPER_ADMIN:
             return Availability.objects.all()
         elif user.role == Roles.DOCTOR:
             return Availability.objects.filter(doctor = user)
