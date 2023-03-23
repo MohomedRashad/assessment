@@ -3,9 +3,10 @@ from rest_framework.exceptions import MethodNotAllowed
 from django.conf import settings
 from rest_framework.views import APIView
 from django.http import Http404
+from django.db.models import Q
 from rest_framework import status
 from apps.users.permissions import DoctorOrReadOnly, PatientOrReadOnly, SystemAdminOrReadOnly, PharmacyOrReadOnly
-from apps.users.models import Pharmacy
+from apps.users.models import Pharmacy, Roles
 from .models import AppointmentStatus, Availability, OrderType, PharmacyReviewStatus, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
 from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
 from datetime import datetime
@@ -311,6 +312,14 @@ class OrderViewSet(viewsets.ViewSet):
     def list(self, request):
         type = self.request.query_params.get('type')
         queryset = Order.objects.all()
+        user = self.request.user
+        if user.role == Roles.DOCTOR:
+            queryset = queryset.filter(Q(appointment__availability__doctor = user) | Q(form_assessment__doctor = user))
+        elif user.role == Roles.PATIENT:
+            queryset = queryset.filter(Q(appointment__patient = user) | Q(form_assessment__patient = user))
+        elif user.role == Roles.PHARMACY:
+            #todo
+            print("Should implement the pharmacy logic")
         if type is not None:
             queryset = queryset.filter(type = type)
         serializer = OrderSerializer(queryset, many=True)
