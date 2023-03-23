@@ -1,22 +1,28 @@
-from rest_framework import viewsets
-from rest_framework.exceptions import MethodNotAllowed
-from django.conf import settings
-from rest_framework.views import APIView
-from django.http import Http404
-from rest_framework import status
-from apps.users.permissions import DoctorOrReadOnly, PatientOrReadOnly, SystemAdminOrReadOnly, PharmacyOrReadOnly
-from apps.users.models import Pharmacy
-from .models import AppointmentStatus, Availability, OrderType, PharmacyReviewStatus, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
-from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
 from datetime import datetime
-from rest_framework.exceptions import ValidationError
-from .services import check_meeting_slot_time, create_order
-from django.shortcuts import get_object_or_404
+from django.conf import settings
 from django.db import transaction
-from rest_framework.response import Response
+from django.db.models import Q
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from .models import Availability, Appointment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Medicine, Prescription
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentFeedbackSerializer, MedicineSerializer, AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, PrescriptionSerializer
+from rest_framework.exceptions import MethodNotAllowed, ValidationError
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from apps.users.models import Pharmacy, Roles
+from apps.users.permissions import (DoctorOrReadOnly, PatientOrReadOnly, PharmacyOrReadOnly, SystemAdminOrReadOnly)
+
+from .models import (Appointment, AppointmentStatus, Availability, Country, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, FormAssessmentQuestion, Medicine,
+                     Order, OrderType, PharmacyReviewStatus, Prescription,
+                     RecommendedVaccine, Treatment)
+from .serializers import (AddAppointmentSerializer, AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer,
+                          AddRecommendedVaccineSerializer, AppointmentSerializer, AvailabilitySerializer, CountrySerializer, FormAssessmentQuestionSerializer,
+                          MedicineSerializer, OrderSerializer, PharmacySerializer, PrescriptionSerializer,
+                          UpdateAppointmentStatusSerializer, ViewAllFormAssessmentSerializer,
+                          ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer,
+                          ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer)
+from .services import check_meeting_slot_time, create_order
 
 class AvailabilityViewSet(viewsets.ModelViewSet):
     queryset = Availability.objects.all()
@@ -136,9 +142,19 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 super().perform_update(serializer)
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
-    queryset = Prescription.objects.all()
     serializer_class = PrescriptionSerializer
-    
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == Roles.SUPER_ADMIN:
+            return Prescription.objects.all()
+        elif user.role == Roles.DOCTOR:
+            return Prescription.objects.filter(Q(appointment__availability__doctor = user) | Q(form_assessment__doctor = user))
+        elif user.role == Roles.PATIENT:
+            return Prescription.objects.filter(Q(appointment__patient = user) | Q(form_assessment__patient = user))
+        elif user.role == Roles.PHARMACY:
+            return Prescription.objects.filter(pharmacy = user)
+
     def perform_create(self, serializer):
         # Validate and save the medicine instances into a new dictionary before continuing
         medicines = []
