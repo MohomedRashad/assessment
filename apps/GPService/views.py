@@ -312,12 +312,11 @@ class OrderViewSet(viewsets.ViewSet):
     def list(self, request):
         type = self.request.query_params.get('type')
         queryset = Order.objects.all()
-        user = self.request.user
-        if user.role == Roles.DOCTOR:
-            queryset = queryset.filter(Q(appointment__availability__doctor = user) | Q(form_assessment__doctor = user))
-        elif user.role == Roles.PATIENT:
-            queryset = queryset.filter(Q(appointment__patient = user) | Q(form_assessment__patient = user))
-        elif user.role == Roles.PHARMACY:
+        if self.request.user.role == Roles.DOCTOR:
+            queryset = queryset.filter(Q(appointment__availability__doctor = self.request.user) | Q(form_assessment__doctor = self.request.user))
+        elif self.request.user.role == Roles.PATIENT:
+            queryset = queryset.filter(Q(appointment__patient = self.request.user) | Q(form_assessment__patient = self.request.user))
+        elif self.request.user.role == Roles.PHARMACY:
             #todo
             print("Should implement the pharmacy logic")
         if type is not None:
