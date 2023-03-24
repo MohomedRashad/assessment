@@ -24,12 +24,11 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
     permission_classes = [DoctorOrReadOnly]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.role == Roles.SUPER_ADMIN:
+        if self.request.user.role == Roles.SUPER_ADMIN:
             return Availability.objects.all()
-        elif user.role == Roles.DOCTOR:
-            return Availability.objects.filter(doctor = user)
-        elif user.role == Roles.PATIENT:
+        elif self.request.user.role == Roles.DOCTOR:
+            return Availability.objects.filter(doctor = self.request.user)
+        elif self.request.user.role == Roles.PATIENT:
             return Availability.objects.filter(date__gte = timezone.now().date(), is_booked = False)
 
     def perform_create(self, serializer):
