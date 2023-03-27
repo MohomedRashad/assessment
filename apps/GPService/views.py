@@ -1,11 +1,12 @@
 from rest_framework import viewsets
-from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.exceptions import MethodNotAllowed, PermissionDenied
 from django.conf import settings
 from rest_framework.views import APIView
 from django.http import Http404
+from django.db.models import Q
 from rest_framework import status
 from apps.users.permissions import DoctorWriteOnly, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
-from apps.users.models import Pharmacy
+from apps.users.models import Pharmacy, Roles
 from .models import AppointmentStatus, Availability, OrderType, PharmacyReviewStatus, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
 from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
 from datetime import datetime
@@ -192,17 +193,22 @@ class FormAssessmentViewSet(viewsets.ViewSet):
     permission_classes = [PatientWriteOnly]
     
     def list(self, request):
-        #Returns a list of form assessments of the current patient
         form_assessment_type = self.request.query_params.get('type')
-        queryset = FormAssessment.objects.filter(patient=self.request.user)
+        queryset = FormAssessment.objects.all()
+        if self.request.user.role == Roles.DOCTOR:
+            queryset.filter(Q(doctor=request.user) | Q(doctor__isnull=True))
+        elif self.request.user.role == Roles.PATIENT:
+            queryset.filter(patient=self.request.user)
         if form_assessment_type is not None:
             queryset.filter(type=form_assessment_type)
         serializer = ViewAllFormAssessmentSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
-        #Returns the detail view of a form assessment based on the given id
         form_assessment = get_object_or_404(FormAssessment, id = pk)
+        if self.request.user.role == Roles.DOCTOR:
+            if form_assessment.doctor is not None and form_assessment.doctor != self.request.user:
+                raise PermissionDenied("You don't have permission to access this form assessment instance.")
         serializer = ViewFormAssessmentSerializer(form_assessment)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
