@@ -209,6 +209,9 @@ class FormAssessmentViewSet(viewsets.ViewSet):
         if self.request.user.role == Roles.DOCTOR:
             if form_assessment.doctor is not None and form_assessment.doctor != self.request.user:
                 raise PermissionDenied("You don't have permission to access this form assessment instance.")
+        if self.request.user.role == Roles.PATIENT:
+            if form_assessment.patient != self.request.user:
+                raise PermissionDenied("You don't have permission to access this form assessment instance.")
         serializer = ViewFormAssessmentSerializer(form_assessment)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
