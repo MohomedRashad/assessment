@@ -5,10 +5,11 @@ from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import status
 from apps.users.permissions import DoctorWriteOnly, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
-from apps.users.models import Pharmacy
+from apps.users.models import Pharmacy, Roles
 from .models import AppointmentStatus, Availability, OrderType, PharmacyReviewStatus, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
 from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
 from datetime import datetime
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from .services import check_meeting_slot_time, create_order
 from django.shortcuts import get_object_or_404
@@ -19,9 +20,16 @@ from .models import Availability, Appointment, FormAssessmentQuestion, FormAsses
 from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentFeedbackSerializer, MedicineSerializer, AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, PrescriptionSerializer
 
 class AvailabilityViewSet(viewsets.ModelViewSet):
-    queryset = Availability.objects.all()
     serializer_class = AvailabilitySerializer
     permission_classes = [DoctorWriteOnly]
+
+    def get_queryset(self):
+        if self.request.user.role == Roles.SUPER_ADMIN:
+            return Availability.objects.all()
+        elif self.request.user.role == Roles.DOCTOR:
+            return Availability.objects.filter(doctor = self.request.user)
+        elif self.request.user.role == Roles.PATIENT:
+            return Availability.objects.filter(date__gte = timezone.now().date(), is_booked = False)
 
     def perform_create(self, serializer):
         starting_time = datetime.strptime(self.request.data.get('starting_time'), '%H:%M:%S')
