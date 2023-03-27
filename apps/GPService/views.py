@@ -4,7 +4,7 @@ from django.conf import settings
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import status
-from apps.users.permissions import DoctorWriteOnly, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
+from apps.users.permissions import DoctorWriteOnly, PatientWriteOnly, SystemAdminOrReadOnly, PharmacyOrReadOnly
 from apps.users.models import Pharmacy, Roles
 from .models import AppointmentStatus, Availability, OrderType, PharmacyReviewStatus, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
 from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
@@ -77,7 +77,6 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
             super().perform_destroy(instance)
 
 class AppointmentViewSet(viewsets.ModelViewSet):
-    queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
     permission_classes = [PatientWriteOnly]
 
@@ -88,13 +87,17 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             return AddAppointmentSerializer
         return super(AppointmentViewSet, self).get_serializer_class()
 
-    def get_queryset(self):
-        status = self.request.query_params.get('status')
-        if status is not None:
-            self.queryset.filter(status=status, patient=self.request.user)
-        else:
-            self.queryset.filter(patient=self.request.user)
-        return self.queryset
+def get_queryset(self):
+    status = self.request.query_params.get('status')
+    queryset = Appointment.objects.all()
+    if self.request.user.role == Roles.DOCTOR:
+        queryset = queryset.filter(availability__doctor_id=self.request.user)
+    elif self.request.user.role == Roles.PATIENT:
+        queryset = queryset.filter(patient=self.request.user)
+
+    if status is not None:
+        queryset = queryset.filter(status=status)
+    return queryset
 
     @transaction.atomic
     def perform_create(self, serializer):
