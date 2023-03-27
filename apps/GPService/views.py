@@ -267,9 +267,14 @@ class FormAssessmentViewSet(viewsets.ViewSet):
     @action(methods=['get', 'post'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-feedbacks', permission_classes=[DoctorWriteOnly])
     def form_assessment_feedback(self, request, form_assessment_id):
         if request.method == 'GET':
-            #Returns the feedbacks of a given form assessment
-            get_object_or_404(FormAssessment, id = form_assessment_id) #Making sure the form assessment is a valid instance
+            form_assessment = get_object_or_404(FormAssessment, id = form_assessment_id)
             queryset = FormAssessmentFeedback.objects.filter(form_assessment = form_assessment_id)
+            if self.request.user.role == Roles.DOCTOR:
+                if form_assessment.doctor is not None and form_assessment.doctor != self.request.user:
+                    raise PermissionDenied("You don't have permission to access feedbacks for the current form assessment instance.")
+            elif self.request.user.role == Roles.PATIENT:
+                if form_assessment.patient != self.request.user:
+                    raise PermissionDenied("You don't have permission to access feedbacks for the current form assessment instance.")
             serializer = ViewFormAssessmentFeedbackSerializer(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         if request.method == 'POST':
