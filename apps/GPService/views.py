@@ -229,10 +229,10 @@ class FormAssessmentViewSet(viewsets.ViewSet):
         form_assessment = get_object_or_404(FormAssessment, id = pk)
         if self.request.user.role == Roles.DOCTOR:
             if form_assessment.doctor is not None and form_assessment.doctor != self.request.user:
-                raise PermissionDenied("You don't have permission to access this form assessment instance.")
+                raise PermissionDenied
         if self.request.user.role == Roles.PATIENT:
             if form_assessment.patient != self.request.user:
-                raise PermissionDenied("You don't have permission to access this form assessment instance.")
+                raise PermissionDenied
         serializer = ViewFormAssessmentSerializer(form_assessment)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -295,10 +295,10 @@ class FormAssessmentViewSet(viewsets.ViewSet):
             queryset = FormAssessmentFeedback.objects.filter(form_assessment = form_assessment_id)
             if self.request.user.role == Roles.DOCTOR:
                 if form_assessment.doctor is not None and form_assessment.doctor != self.request.user:
-                    raise PermissionDenied("You don't have permission to access feedbacks for the current form assessment instance.")
+                    raise PermissionDenied
             elif self.request.user.role == Roles.PATIENT:
                 if form_assessment.patient != self.request.user:
-                    raise PermissionDenied("You don't have permission to access feedbacks for the current form assessment instance.")
+                    raise PermissionDenied
             serializer = ViewFormAssessmentFeedbackSerializer(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         if request.method == 'POST':
