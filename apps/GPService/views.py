@@ -217,11 +217,11 @@ class FormAssessmentViewSet(viewsets.ViewSet):
         form_assessment_type = self.request.query_params.get('type')
         queryset = FormAssessment.objects.all()
         if self.request.user.role == Roles.DOCTOR:
-            queryset.filter(Q(doctor=request.user) | Q(doctor__isnull=True))
+            queryset = queryset.filter(Q(doctor = request.user) | Q(doctor__isnull = True))
         elif self.request.user.role == Roles.PATIENT:
-            queryset.filter(patient=self.request.user)
+            queryset = queryset.filter(patient=self.request.user)
         if form_assessment_type is not None:
-            queryset.filter(type=form_assessment_type)
+            queryset = queryset.filter(type=form_assessment_type)
         serializer = ViewAllFormAssessmentSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
