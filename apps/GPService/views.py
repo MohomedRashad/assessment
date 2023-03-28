@@ -214,13 +214,14 @@ class FormAssessmentViewSet(viewsets.ViewSet):
     permission_classes = [PatientWriteOnly]
     
     def list(self, request):
-        form_assessment_type = self.request.query_params.get('type')
-        queryset = FormAssessment.objects.all()
+        queryset = None
         if self.request.user.role == Roles.DOCTOR:
-            queryset = queryset.filter(Q(doctor = request.user) | Q(doctor__isnull = True))
+            queryset = FormAssessment.objects.filter(Q(doctor = request.user) | Q(doctor__isnull = True))
         elif self.request.user.role == Roles.PATIENT:
-            queryset = queryset.filter(patient=self.request.user)
-        if form_assessment_type is not None:
+            queryset = FormAssessment.objects.filter(patient=self.request.user)
+        elif self.request.user.role == Roles.SUPER_ADMIN:
+            queryset = FormAssessment.objects.all()
+        if self.request.query_params.get('type') is not None:
             queryset = queryset.filter(type=form_assessment_type)
         serializer = ViewAllFormAssessmentSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
