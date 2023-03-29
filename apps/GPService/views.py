@@ -212,6 +212,7 @@ class FormAssessmentQuestionViewSet(viewsets.ViewSet):
 
 class FormAssessmentViewSet(viewsets.ModelViewSet):
     permission_classes = [PatientWriteOnly]
+    queryset = FormAssessment.objects.all()
     serializer_class = ViewAllFormAssessmentSerializer
     
     def list(self, request):
