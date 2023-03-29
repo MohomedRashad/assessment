@@ -210,8 +210,9 @@ class FormAssessmentQuestionViewSet(viewsets.ViewSet):
         serializer = FormAssessmentQuestionSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class FormAssessmentViewSet(viewsets.ViewSet):
+class FormAssessmentViewSet(viewsets.ModelViewSet):
     permission_classes = [PatientWriteOnly]
+    serializer_class = ViewAllFormAssessmentSerializer
     
     def list(self, request):
         queryset = None
@@ -226,8 +227,8 @@ class FormAssessmentViewSet(viewsets.ViewSet):
         serializer = ViewAllFormAssessmentSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def retrieve(self, request, pk=None):
         form_assessment = get_object_or_404(FormAssessment, id = pk)
+    def retrieve(self, request, pk=None):
         if self.request.user.role == Roles.DOCTOR:
             if form_assessment.doctor is not None and form_assessment.doctor != self.request.user:
                 raise PermissionDenied
