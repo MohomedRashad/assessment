@@ -228,8 +228,8 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
         serializer = ViewAllFormAssessmentSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-        form_assessment = get_object_or_404(FormAssessment, id = pk)
     def retrieve(self, request, pk=None):
+        form_assessment = get_object_or_404(FormAssessment, id = pk)
         if self.request.user.role == Roles.DOCTOR:
             if form_assessment.doctor is not None and form_assessment.doctor != self.request.user:
                 raise PermissionDenied
