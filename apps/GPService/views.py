@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from django.http import Http404
 from django.db.models import Q
 from rest_framework import status
-from apps.users.permissions import DoctorWriteOnly, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
+from apps.users.permissions import DoctorWriteOnly, IsAllowedToAccessAssessment, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
 from apps.users.models import Pharmacy, Roles
 from .models import AppointmentStatus, Availability, OrderType, PharmacyReviewStatus, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
 from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
@@ -89,17 +89,17 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             return AddAppointmentSerializer
         return super(AppointmentViewSet, self).get_serializer_class()
 
-def get_queryset(self):
-    status = self.request.query_params.get('status')
-    queryset = Appointment.objects.all()
-    if self.request.user.role == Roles.DOCTOR:
-        queryset = queryset.filter(availability__doctor_id=self.request.user)
-    elif self.request.user.role == Roles.PATIENT:
-        queryset = queryset.filter(patient=self.request.user)
+    def get_queryset(self):
+        status = self.request.query_params.get('status')
+        queryset = Appointment.objects.all()
+        if self.request.user.role == Roles.DOCTOR:
+            queryset = queryset.filter(availability__doctor_id=self.request.user)
+        elif self.request.user.role == Roles.PATIENT:
+            queryset = queryset.filter(patient=self.request.user)
 
-    if status is not None:
-        queryset = queryset.filter(status=status)
-    return queryset
+        if status is not None:
+            queryset = queryset.filter(status=status)
+        return queryset
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -211,11 +211,10 @@ class FormAssessmentQuestionViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class FormAssessmentViewSet(viewsets.ModelViewSet):
-    permission_classes = [PatientWriteOnly]
-    queryset = FormAssessment.objects.all()
+    permission_classes = [PatientWriteOnly, IsAllowedToAccessAssessment]
     serializer_class = ViewAllFormAssessmentSerializer
 
-    def list(self, request):
+    def get_queryset(self):
         queryset = None
         if self.request.user.role == Roles.DOCTOR:
             queryset = FormAssessment.objects.filter(Q(doctor = request.user) | Q(doctor__isnull = True))
@@ -225,19 +224,7 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
             queryset = FormAssessment.objects.all()
         if self.request.query_params.get('type') is not None:
             queryset = queryset.filter(type=form_assessment_type)
-        serializer = ViewAllFormAssessmentSerializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def retrieve(self, request, pk=None):
-        form_assessment = get_object_or_404(FormAssessment, id = pk)
-        if self.request.user.role == Roles.DOCTOR:
-            if form_assessment.doctor is not None and form_assessment.doctor != self.request.user:
-                raise PermissionDenied
-        if self.request.user.role == Roles.PATIENT:
-            if form_assessment.patient != self.request.user:
-                raise PermissionDenied
-        serializer = ViewFormAssessmentSerializer(form_assessment)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return queryset
 
     @transaction.atomic
     @action(methods=['post'], detail=False, url_path='form-assessment-answers', permission_classes=[PatientWriteOnly])
