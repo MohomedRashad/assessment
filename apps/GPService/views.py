@@ -218,20 +218,17 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
         queryset = None
         form_assessment_type = self.request.query_params.get('type')
         if self.request.user.role == Roles.DOCTOR:
-            if self.request.query_params.get('type') is not None:
-                queryset = FormAssessment.objects.filter(Q(doctor = self.request.user) | Q(doctor__isnull = True), Q(type = form_assessment_type))
-            else:
-                queryset = FormAssessment.objects.filter(Q(doctor = self.request.user) | Q(doctor__isnull = True))
+            filter_criteria = Q(doctor=self.request.user) | Q(doctor__isnull=True)
         elif self.request.user.role == Roles.PATIENT:
-            if self.request.query_params.get('type') is not None:
-                queryset = FormAssessment.objects.filter(patient=self.request.user, type=form_assessment_type)
-            else:
-                queryset = FormAssessment.objects.filter(patient=self.request.user)
+            filter_criteria = Q(patient=self.request.user)
         elif self.request.user.role == Roles.SUPER_ADMIN:
-            if self.request.query_params.get('type') is not None:
-                queryset = queryset.filter(type=form_assessment_type)
-            else:
-                queryset = FormAssessment.objects.all()
+            filter_criteria = Q()
+        else:
+            filter_criteria = None
+        if form_assessment_type is not None:
+            queryset = FormAssessment.objects.filter(filter_criteria, type=form_assessment_type)
+        else:
+            queryset = FormAssessment.objects.filter(filter_criteria)
         return queryset
 
     @transaction.atomic
