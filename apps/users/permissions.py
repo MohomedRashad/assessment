@@ -103,3 +103,13 @@ class PatientWriteOnly(BasePermission):
             return True
 
         return obj.patient == request.user
+
+class IsAllowedToAccessAssessment(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.user.role == Roles.DOCTOR:
+            if obj.doctor is not None and obj.doctor != request.user:
+                return False
+        elif request.user.role == Roles.PATIENT:
+            if obj.patient != request.user:
+                return False
+        return True

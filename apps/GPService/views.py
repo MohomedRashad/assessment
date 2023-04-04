@@ -1,11 +1,11 @@
 from rest_framework import viewsets
-from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.exceptions import MethodNotAllowed, PermissionDenied
 from django.conf import settings
 from rest_framework.views import APIView
 from django.http import Http404
 from django.db.models import Q
 from rest_framework import status
-from apps.users.permissions import DoctorWriteOnly, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
+from apps.users.permissions import DoctorWriteOnly, IsAllowedToAccessAssessment, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
 from apps.users.models import Pharmacy, Roles
 from .models import AppointmentStatus, Availability, OrderType, PharmacyReviewStatus, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
 from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
@@ -20,6 +20,7 @@ from rest_framework.decorators import action
 from django.db.models import Q
 from apps.GPService.models import Appointment, Availability, Prescription, Medicine, Country, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Order, RecommendedVaccine, AppointmentStatus, OrderType, PharmacyReviewStatus
 from apps.GPService.serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, PrescriptionSerializer, MedicineSerializer, AddRecommendedVaccineSerializer, ViewRecommendedVaccineSerializer, CountrySerializer, PharmacySerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, OrderSerializer
+from django_filters.rest_framework import DjangoFilterBackend
 
 class AvailabilityViewSet(viewsets.ModelViewSet):
     serializer_class = AvailabilitySerializer
@@ -89,17 +90,17 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             return AddAppointmentSerializer
         return super(AppointmentViewSet, self).get_serializer_class()
 
-def get_queryset(self):
-    status = self.request.query_params.get('status')
-    queryset = Appointment.objects.all()
-    if self.request.user.role == Roles.DOCTOR:
-        queryset = queryset.filter(availability__doctor_id=self.request.user)
-    elif self.request.user.role == Roles.PATIENT:
-        queryset = queryset.filter(patient=self.request.user)
+    def get_queryset(self):
+        status = self.request.query_params.get('status')
+        queryset = Appointment.objects.all()
+        if self.request.user.role == Roles.DOCTOR:
+            queryset = queryset.filter(availability__doctor_id=self.request.user)
+        elif self.request.user.role == Roles.PATIENT:
+            queryset = queryset.filter(patient=self.request.user)
 
-    if status is not None:
-        queryset = queryset.filter(status=status)
-    return queryset
+        if status is not None:
+            queryset = queryset.filter(status=status)
+        return queryset
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -210,23 +211,19 @@ class FormAssessmentQuestionViewSet(viewsets.ViewSet):
         serializer = FormAssessmentQuestionSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class FormAssessmentViewSet(viewsets.ViewSet):
-    permission_classes = [PatientWriteOnly]
-    
-    def list(self, request):
-        #Returns a list of form assessments of the current patient
-        form_assessment_type = self.request.query_params.get('type')
-        queryset = FormAssessment.objects.filter(patient=self.request.user)
-        if form_assessment_type is not None:
-            queryset.filter(type=form_assessment_type)
-        serializer = ViewAllFormAssessmentSerializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class FormAssessmentViewSet(viewsets.ModelViewSet):
+    permission_classes = [PatientWriteOnly, IsAllowedToAccessAssessment]
+    serializer_class = ViewAllFormAssessmentSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['type']
 
-    def retrieve(self, request, pk=None):
-        #Returns the detail view of a form assessment based on the given id
-        form_assessment = get_object_or_404(FormAssessment, id = pk)
-        serializer = ViewFormAssessmentSerializer(form_assessment)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        if self.request.user.role == Roles.DOCTOR:
+            return FormAssessment.objects.filter(Q(doctor=self.request.user) | Q(doctor__isnull=True))
+        elif self.request.user.role == Roles.PATIENT:
+            return FormAssessment.objects.filter(patient=self.request.user)
+        elif self.request.user.role == Roles.SUPER_ADMIN:
+            return FormAssessment.objects.all()
 
     @transaction.atomic
     @action(methods=['post'], detail=False, url_path='form-assessment-answers', permission_classes=[PatientWriteOnly])
@@ -283,9 +280,14 @@ class FormAssessmentViewSet(viewsets.ViewSet):
     @action(methods=['get', 'post'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-feedbacks', permission_classes=[DoctorWriteOnly])
     def form_assessment_feedback(self, request, form_assessment_id):
         if request.method == 'GET':
-            #Returns the feedbacks of a given form assessment
-            get_object_or_404(FormAssessment, id = form_assessment_id) #Making sure the form assessment is a valid instance
+            form_assessment = get_object_or_404(FormAssessment, id = form_assessment_id)
             queryset = FormAssessmentFeedback.objects.filter(form_assessment = form_assessment_id)
+            if self.request.user.role == Roles.DOCTOR:
+                if form_assessment.doctor is not None and form_assessment.doctor != self.request.user:
+                    raise PermissionDenied
+            elif self.request.user.role == Roles.PATIENT:
+                if form_assessment.patient != self.request.user:
+                    raise PermissionDenied
             serializer = ViewFormAssessmentFeedbackSerializer(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         if request.method == 'POST':

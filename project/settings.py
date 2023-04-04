@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'apps.files',
     'apps.users',
     'apps.GPService',
+    'django_filters'
 ]
 
 MIDDLEWARE = [
