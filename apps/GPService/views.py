@@ -20,6 +20,7 @@ from rest_framework.decorators import action
 from django.db.models import Q
 from apps.GPService.models import Appointment, Availability, Prescription, Medicine, Country, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Order, RecommendedVaccine, AppointmentStatus, OrderType, PharmacyReviewStatus
 from apps.GPService.serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, PrescriptionSerializer, MedicineSerializer, AddRecommendedVaccineSerializer, ViewRecommendedVaccineSerializer, CountrySerializer, PharmacySerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, OrderSerializer
+from django_filters.rest_framework import DjangoFilterBackend
 
 class AvailabilityViewSet(viewsets.ModelViewSet):
     serializer_class = AvailabilitySerializer
@@ -213,23 +214,16 @@ class FormAssessmentQuestionViewSet(viewsets.ViewSet):
 class FormAssessmentViewSet(viewsets.ModelViewSet):
     permission_classes = [PatientWriteOnly, IsAllowedToAccessAssessment]
     serializer_class = ViewAllFormAssessmentSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['type']
 
     def get_queryset(self):
-        queryset = None
-        form_assessment_type = self.request.query_params.get('type')
         if self.request.user.role == Roles.DOCTOR:
-            filter_criteria = Q(doctor=self.request.user) | Q(doctor__isnull=True)
+            return FormAssessment.objects.filter(Q(doctor=self.request.user) | Q(doctor__isnull=True))
         elif self.request.user.role == Roles.PATIENT:
-            filter_criteria = Q(patient=self.request.user)
+            return FormAssessment.objects.filter(patient=self.request.user)
         elif self.request.user.role == Roles.SUPER_ADMIN:
-            filter_criteria = Q()
-        else:
-            filter_criteria = None
-        if form_assessment_type is not None:
-            queryset = FormAssessment.objects.filter(filter_criteria, type=form_assessment_type)
-        else:
-            queryset = FormAssessment.objects.filter(filter_criteria)
-        return queryset
+            return FormAssessment.objects.all()
 
     @transaction.atomic
     @action(methods=['post'], detail=False, url_path='form-assessment-answers', permission_classes=[PatientWriteOnly])
