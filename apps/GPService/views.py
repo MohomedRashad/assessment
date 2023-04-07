@@ -7,8 +7,8 @@ from django.db.models import Q
 from rest_framework import status
 from apps.users.permissions import DoctorWriteOnly, IsAllowedToAccessAssessment, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
 from apps.users.models import Pharmacy, Roles
-from .models import AppointmentStatus, Availability, OrderType, PharmacyReviewStatus, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
-from .serializers import AddFormAssessmentAnswerSerializer, AddFormAssessmentFeedbackSerializer, AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, OrderSerializer, PharmacySerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, ViewFormAssessmentSerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, FormAssessmentQuestionSerializer
+from .models import AppointmentStatus, FormAssessmentType, PharmacyReviewStatus, Availability, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, PrescriptionSerializer, OrderSerializer, PharmacySerializer
 from datetime import datetime
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -18,8 +18,6 @@ from django.db import transaction
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Q
-from apps.GPService.models import Appointment, Availability, Prescription, Medicine, Country, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Order, RecommendedVaccine, AppointmentStatus, OrderType, PharmacyReviewStatus
-from apps.GPService.serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, PrescriptionSerializer, MedicineSerializer, AddRecommendedVaccineSerializer, ViewRecommendedVaccineSerializer, CountrySerializer, PharmacySerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, OrderSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 
 class AvailabilityViewSet(viewsets.ModelViewSet):
