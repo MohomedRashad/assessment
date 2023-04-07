@@ -82,6 +82,8 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
 class AppointmentViewSet(viewsets.ModelViewSet):
     serializer_class = AppointmentSerializer
     permission_classes = [PatientWriteOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['status']
 
     def get_serializer_class(self):
         if self.action == 'update' or self.action == 'destroy':
@@ -91,16 +93,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         return super(AppointmentViewSet, self).get_serializer_class()
 
     def get_queryset(self):
-        status = self.request.query_params.get('status')
-        queryset = Appointment.objects.all()
         if self.request.user.role == Roles.DOCTOR:
-            queryset = queryset.filter(availability__doctor_id=self.request.user)
+            return Appointment.objects.filter(availability__doctor_id=self.request.user)
         elif self.request.user.role == Roles.PATIENT:
-            queryset = queryset.filter(patient=self.request.user)
-
-        if status is not None:
-            queryset = queryset.filter(status=status)
-        return queryset
+            return Appointment.objects.filter(patient=self.request.user)
 
     @transaction.atomic
     def perform_create(self, serializer):
