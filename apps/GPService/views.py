@@ -34,6 +34,12 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
         elif self.request.user.role == Roles.PATIENT:
             return Availability.objects.filter(date__gte = timezone.now().date(), is_booked = False)
 
+    @action(methods=['get'], detail=False, url_path='(?P<doctor_id>[a-zA-Z0-9]+)/availabilities')
+    def get_all_availabilities_for_a_given_doctor(self, request, doctor_id):
+        queryset = Availability.objects.filter(doctor__id = doctor_id, date__gte = timezone.now().date(), is_booked=False)
+        serializer = AvailabilitySerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def perform_create(self, serializer):
         starting_time = datetime.strptime(self.request.data.get('starting_time'), '%H:%M:%S')
         ending_time = datetime.strptime(self.request.data.get('ending_time'), '%H:%M:%S')
