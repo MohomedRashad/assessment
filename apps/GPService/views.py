@@ -21,6 +21,7 @@ from django.db.models import Q
 from apps.GPService.models import Appointment, Availability, Prescription, Medicine, Country, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Order, RecommendedVaccine, AppointmentStatus, OrderType, PharmacyReviewStatus
 from apps.GPService.serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, PrescriptionSerializer, MedicineSerializer, AddRecommendedVaccineSerializer, ViewRecommendedVaccineSerializer, CountrySerializer, PharmacySerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, OrderSerializer
 from django_filters.rest_framework import DjangoFilterBackend
+from django.urls import path
 
 class AvailabilityViewSet(viewsets.ModelViewSet):
     serializer_class = AvailabilitySerializer
@@ -34,9 +35,8 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
         elif self.request.user.role == Roles.PATIENT:
             return Availability.objects.filter(date__gte = timezone.now().date(), is_booked = False)
 
-    @action(methods=['get'], detail=False, url_path='(?P<doctor_id>[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12})/availabilities')
     def get_all_availabilities_for_a_given_doctor(self, request, doctor_id):
-        queryset = Availability.objects.filter(doctor__id = doctor_id, date__gte = timezone.now().date(), is_booked=False)
+        queryset = Availability.objects.filter(doctor__id=doctor_id, date__gte = timezone.now().date(), is_booked=False)
         serializer = AvailabilitySerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

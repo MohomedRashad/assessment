@@ -13,7 +13,6 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from re import A
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import (
@@ -47,6 +46,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/availabilities/<uuid:doctor_id>/availabilities/', AvailabilityViewSet.as_view({'get': 'get_all_availabilities_for_a_given_doctor'}), name='doctor-availabilities'),
 ]
 
 if settings.DEBUG:
