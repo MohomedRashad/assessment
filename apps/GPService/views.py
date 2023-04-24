@@ -19,6 +19,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
+from django.urls import path
 
 class AvailabilityViewSet(viewsets.ModelViewSet):
     serializer_class = AvailabilitySerializer
@@ -31,6 +32,12 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
             return Availability.objects.filter(doctor = self.request.user)
         elif self.request.user.role == Roles.PATIENT:
             return Availability.objects.filter(date__gte = timezone.now().date(), is_booked = False)
+
+    @action(methods=['get'], detail=False, url_path='(?P<doctor_id>[^/.]+)/availabilities')
+    def get_all_availabilities_for_a_given_doctor(self, request, doctor_id):
+        queryset = Availability.objects.filter(doctor__id=doctor_id, date__gte = timezone.now().date(), is_booked=False)
+        serializer = AvailabilitySerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def perform_create(self, serializer):
         starting_time = datetime.strptime(self.request.data.get('starting_time'), '%H:%M:%S')
