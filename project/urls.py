@@ -46,7 +46,6 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/availabilities/<uuid:doctor_id>/availabilities/', AvailabilityViewSet.as_view({'get': 'get_all_availabilities_for_a_given_doctor'}), name='doctor-availabilities'),
 ]
 
 if settings.DEBUG:
