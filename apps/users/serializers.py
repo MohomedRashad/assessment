@@ -8,11 +8,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from apps.users.error_codes import AccountErrorCodes
-from apps.users.models import Pharmacy, Roles
+from apps.users.models import Doctor, Patient, Pharmacy, Roles
 from project import settings
 
 def create_user(validated_data):
-    # Check if required fields are provided for the pharmacy user type
     if validated_data.get('role') == Roles.PHARMACY and not all([validated_data.get('pharmacy_name'), validated_data.get('postal_code')]):
         raise ValidationError('Please provide pharmacy name and postal code for pharmacy users')
 
@@ -21,24 +20,36 @@ def create_user(validated_data):
     instance = get_user_model().objects.create(
         first_name=validated_data['first_name'],
         last_name=validated_data['last_name'],
-        username = validated_data['email'],
-        role = validated_data['role']
+        username=validated_data['email'],
+        role=validated_data['role']
     )
     instance.set_password(validated_data['password'])
     instance.save()
 
     if validated_data['role'] == Roles.PHARMACY:
-        # Create a pharmacy object for the created user
-        Pharmacy.objects.create(user=instance, name= validated_data['pharmacy_name'], postal_code = validated_data['postal_code'])
+        Pharmacy.objects.create(user=instance, name=validated_data['pharmacy_name'], postal_code=validated_data['postal_code'])
+    elif validated_data['role'] == Roles.DOCTOR:
+        Doctor.objects.create(user=instance, speciality=validated_data['speciality'], license_number=validated_data['license_number'], years_of_experience=validated_data['years_of_experience'], bio=validated_data['bio'])
+    elif validated_data['role'] == Roles.PATIENT:
+        Patient.objects.create(user=instance, height=validated_data['height'], weight=validated_data['weight'], date_of_birth=validated_data['date_of_birth'], medical_history=validated_data['medical_history'])
+
     return instance
 
 class AuthRegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(required=True, write_only=True, min_length=6)
     pharmacy_name = serializers.CharField(required=False)
     postal_code = serializers.CharField(required=False)
+    speciality = serializers.CharField(required=False)
+    license_number = serializers.CharField(required=False)
+    years_of_experience = serializers.IntegerField(required=False)
+    bio = serializers.CharField(required=False)
+    height = serializers.FloatField(required=False)
+    weight = serializers.FloatField(required=False)
+    date_of_birth = serializers.DateField(required=False)
+    medical_history = serializers.CharField(required=False)
     class Meta:
         model = get_user_model()
-        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role', 'pharmacy_name', 'postal_code']
+        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role', 'pharmacy_name', 'postal_code', 'speciality', 'license_number', 'years_of_experience', 'bio', 'height', 'weight', 'date_of_birth', 'medical_history']
         extra_kwargs = {
             'id': {'read_only': True},
             'first_name': {'required': True},
@@ -48,6 +59,14 @@ class AuthRegisterSerializer(serializers.ModelSerializer):
             'role': {'required': True},
             'pharmacy_name': {'required': False},
             'postal_code': {'required': False},
+            'speciality': {'required': False},
+            'license_number': {'required': False},
+            'years_of_experience': {'required': False},
+            'bio': {'required': False},
+            'height': {'required': False},
+            'weight': {'required': False},
+            'date_of_birth': {'required': False},
+            'medical_history': {'required': False},
         }
 
     def validate_confirm_password(self, val):

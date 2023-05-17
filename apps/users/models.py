@@ -69,3 +69,17 @@ class Pharmacy(models.Model):
         )
     postal_code = models.PositiveIntegerField()
     is_active = models.BooleanField(default=True)
+
+class Doctor(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='doctor')
+    speciality = models.CharField(max_length=100, blank=True, null=True)
+    license_number = models.CharField(max_length=50, blank=True, null=True)
+    years_of_experience = models.PositiveIntegerField()
+    bio = models.TextField(blank=True, null=True)
+
+class Patient(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='patient')
+    height = models.FloatField(blank=True, null=True)
+    weight = models.FloatField(blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    medical_history = models.TextField(blank=True, null=True)
