@@ -8,11 +8,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from apps.users.error_codes import AccountErrorCodes
-from apps.users.models import Pharmacy, Roles
+from apps.users.models import Doctor, Patient, Pharmacy, Roles
 from project import settings
 
 def create_user(validated_data):
-    # Check if required fields are provided for the pharmacy user type
     if validated_data.get('role') == Roles.PHARMACY and not all([validated_data.get('pharmacy_name'), validated_data.get('postal_code')]):
         raise ValidationError('Please provide pharmacy name and postal code for pharmacy users')
 
@@ -21,15 +20,19 @@ def create_user(validated_data):
     instance = get_user_model().objects.create(
         first_name=validated_data['first_name'],
         last_name=validated_data['last_name'],
-        username = validated_data['email'],
-        role = validated_data['role']
+        username=validated_data['email'],
+        role=validated_data['role']
     )
     instance.set_password(validated_data['password'])
     instance.save()
 
     if validated_data['role'] == Roles.PHARMACY:
-        # Create a pharmacy object for the created user
-        Pharmacy.objects.create(user=instance, name= validated_data['pharmacy_name'], postal_code = validated_data['postal_code'])
+        Pharmacy.objects.create(user=instance, name=validated_data['pharmacy_name'], postal_code=validated_data['postal_code'])
+    elif validated_data['role'] == Roles.DOCTOR:
+        Doctor.objects.create(user=instance)
+    elif validated_data['role'] == Roles.PATIENT:
+        Patient.objects.create(user=instance)
+
     return instance
 
 class AuthRegisterSerializer(serializers.ModelSerializer):
@@ -101,17 +104,15 @@ class PasswordChangeSerializer(serializers.ModelSerializer):
         else:
             raise ValidationError(AccountErrorCodes.INVALID_PASSWORD)
 
-
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ['id', 'first_name', 'last_name', 'email', 'role']
+        fields = ['id', 'first_name', 'last_name', 'email']
         extra_kwargs = {
             'id': {'read_only': True},
             'first_name': {'required': True},
             'last_name': {'required': True},
             'email': {'read_only': True},
-            'role': {'read_only': True},
         }
 
 class UserRequestResetPasswordSerializer(serializers.Serializer):
