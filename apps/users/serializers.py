@@ -29,9 +29,9 @@ def create_user(validated_data):
     if validated_data['role'] == Roles.PHARMACY:
         Pharmacy.objects.create(user=instance, name=validated_data['pharmacy_name'], postal_code=validated_data['postal_code'])
     elif validated_data['role'] == Roles.DOCTOR:
-        Doctor.objects.create(user=instance, speciality=validated_data['speciality'], license_number=validated_data['license_number'], years_of_experience=validated_data['years_of_experience'], bio=validated_data['bio'])
+        Doctor.objects.create(user=instance)
     elif validated_data['role'] == Roles.PATIENT:
-        Patient.objects.create(user=instance, height=validated_data['height'], weight=validated_data['weight'], date_of_birth=validated_data['date_of_birth'], medical_history=validated_data['medical_history'])
+        Patient.objects.create(user=instance)
 
     return instance
 
@@ -39,17 +39,9 @@ class AuthRegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(required=True, write_only=True, min_length=6)
     pharmacy_name = serializers.CharField(required=False)
     postal_code = serializers.CharField(required=False)
-    speciality = serializers.CharField(required=False)
-    license_number = serializers.CharField(required=False)
-    years_of_experience = serializers.IntegerField(required=False)
-    bio = serializers.CharField(required=False)
-    height = serializers.FloatField(required=False)
-    weight = serializers.FloatField(required=False)
-    date_of_birth = serializers.DateField(required=False)
-    medical_history = serializers.CharField(required=False)
     class Meta:
         model = get_user_model()
-        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role', 'pharmacy_name', 'postal_code', 'speciality', 'license_number', 'years_of_experience', 'bio', 'height', 'weight', 'date_of_birth', 'medical_history']
+        fields = ['id', 'first_name', 'last_name', 'email', 'password', 'confirm_password', 'role', 'pharmacy_name', 'postal_code']
         extra_kwargs = {
             'id': {'read_only': True},
             'first_name': {'required': True},
@@ -59,14 +51,6 @@ class AuthRegisterSerializer(serializers.ModelSerializer):
             'role': {'required': True},
             'pharmacy_name': {'required': False},
             'postal_code': {'required': False},
-            'speciality': {'required': False},
-            'license_number': {'required': False},
-            'years_of_experience': {'required': False},
-            'bio': {'required': False},
-            'height': {'required': False},
-            'weight': {'required': False},
-            'date_of_birth': {'required': False},
-            'medical_history': {'required': False},
         }
 
     def validate_confirm_password(self, val):
@@ -120,18 +104,61 @@ class PasswordChangeSerializer(serializers.ModelSerializer):
         else:
             raise ValidationError(AccountErrorCodes.INVALID_PASSWORD)
 
-
 class ProfileUpdateSerializer(serializers.ModelSerializer):
+    speciality = serializers.CharField(required=False, allow_blank=True)
+    license_number = serializers.CharField(required=False, allow_blank=True)
+    years_of_experience = serializers.IntegerField(required=False)
+    bio = serializers.CharField(required=False, allow_blank=True)
+    height = serializers.FloatField(required=False)
+    weight = serializers.FloatField(required=False)
+    date_of_birth = serializers.DateField(required=False)
+    medical_history = serializers.CharField(required=False, allow_blank=True)
+    name = serializers.CharField(required=False, allow_blank=True)
+    address = serializers.CharField(required=False, allow_blank=True)
+    phone = serializers.CharField(required=False, allow_blank=True)
+    postal_code = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = get_user_model()
-        fields = ['id', 'first_name', 'last_name', 'email', 'role']
+        fields = ['id', 'first_name', 'last_name', 'email', 'speciality', 'license_number', 'years_of_experience', 'bio', 'height', 'weight', 'date_of_birth', 'medical_history', 'name', 'address', 'phone', 'postal_code']
         extra_kwargs = {
             'id': {'read_only': True},
             'first_name': {'required': True},
             'last_name': {'required': True},
             'email': {'read_only': True},
-            'role': {'read_only': True},
         }
+
+    def update(self, instance, validated_data):
+        # Update common user details
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+
+        # Update specific user details based on the role
+        role = instance.role
+        if role == Roles.DOCTOR:
+            doctor = instance.doctor
+            doctor.speciality = validated_data.get('speciality', doctor.speciality)
+            doctor.license_number = validated_data.get('license_number', doctor.license_number)
+            doctor.years_of_experience = validated_data.get('years_of_experience', doctor.years_of_experience)
+            doctor.bio = validated_data.get('bio', doctor.bio)
+            doctor.save()
+        elif role == Roles.PATIENT:
+            patient = instance.patient
+            patient.height = validated_data.get('height', patient.height)
+            patient.weight = validated_data.get('weight', patient.weight)
+            patient.date_of_birth = validated_data.get('date_of_birth', patient.date_of_birth)
+            patient.medical_history = validated_data.get('medical_history', patient.medical_history)
+            patient.save()
+        elif role == Roles.PHARMACY:
+            pharmacy = instance.pharmacy
+            pharmacy.name = validated_data.get('name', pharmacy.name)
+            pharmacy.address = validated_data.get('address', pharmacy.address)
+            pharmacy.phone = validated_data.get('phone', pharmacy.phone)
+            pharmacy.postal_code = validated_data.get('postal_code', pharmacy.postal_code)
+            pharmacy.save()
+
+        instance.save()
+        return instance
 
 class UserRequestResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
