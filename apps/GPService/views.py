@@ -29,7 +29,7 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
         if self.request.user.role == Roles.SUPER_ADMIN:
             return Availability.objects.all()
         elif self.request.user.role == Roles.DOCTOR:
-            return Availability.objects.filter(doctor = self.request.user)
+            return Availability.objects.filter(doctor=self.request.user.doctor)
         elif self.request.user.role == Roles.PATIENT:
             return Availability.objects.filter(date__gte = timezone.now().date(), is_booked = False)
 
@@ -46,14 +46,14 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
             date=self.request.data.get('date'),
             starting_time=self.request.data.get('starting_time'),
             ending_time=self.request.data.get('ending_time'),
-            doctor=self.request.user).exists():
+            doctor=self.request.user.doctor).exists():
             raise ValidationError("This availability instance has already been added before")
         elif not check_meeting_slot_time(
             starting_time.time(),
             ending_time.time()):
             raise ValidationError("The duration of the availability slot should exactly be 15 minutes")
         else:
-            serializer.save(doctor=self.request.user)
+            serializer.save(doctor=self.request.user.doctor)
 
     def perform_update(self, serializer):
         availability = self.get_object()
@@ -70,14 +70,14 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
                 date=self.request.data['date'],
                 starting_time = self.request.data['starting_time'],
                 ending_time=self.request.data['ending_time'],
-                doctor=self.request.user).exists():
+                doctor=self.request.user.doctor).exists():
                 raise ValidationError("This availability instance has already been added before")
         else:
             super().perform_update(serializer)
 
     def perform_destroy(self, instance):
         availability = self.get_object()
-        if availability.doctor != self.request.user:
+        if availability.doctor != self.request.user.doctor:
             raise ValidationError("You are not authorized to delete this availability instance")
         elif availability.is_booked:
             raise ValidationError("This availability instance cannot be deleted as it has been associated with an appointment")
