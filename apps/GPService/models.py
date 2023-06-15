@@ -1,3 +1,4 @@
+import uuid
 import datetime
 from datetime import date
 from django.core.validators import MinValueValidator
@@ -8,7 +9,7 @@ from unittest.util import _MAX_LENGTH
 from django.db import models
 from django.utils import timezone
 from django.db.models import Q
-from apps.users.models import Pharmacy, User
+from apps.users.models import Doctor, Pharmacy, User
 from apps.files.models import File
 from rest_framework.exceptions import ValidationError
 
@@ -39,7 +40,7 @@ class PharmacyReviewStatus(models.TextChoices):
 
 #Models
 class Availability(models.Model):
-    doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='availabilities')
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='availabilities')
     date = models.DateField(
         default=timezone.now,
         validators=[MinValueValidator(limit_value=date.today)]
