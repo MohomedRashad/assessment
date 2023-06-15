@@ -99,22 +99,22 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user.role == Roles.DOCTOR:
-            return Appointment.objects.filter(availability__doctor_id=self.request.user)
+            return Appointment.objects.filter(availability__doctor_id=self.request.user.doctor)
         elif self.request.user.role == Roles.PATIENT:
-            return Appointment.objects.filter(patient=self.request.user)
+            return Appointment.objects.filter(patient=self.request.user.patient)
 
     @transaction.atomic
     def perform_create(self, serializer):
         availability = get_object_or_404(
             Availability, id = self.request.data.get('availability'))
         if Appointment.objects.filter(
-            patient=self.request.user,
+            patient=self.request.user.patient,
             availability=self.request.data.get('availability')).exclude(
             status='CANCELED').exists():
             raise ValidationError("This appointment has already been added before")
         else:
             #Adding the appointment
-            serializer.save(patient=self.request.user)
+            serializer.save(patient=self.request.user.patient)
             #Updating the chosen availability status to booked.
             availability.is_booked = True
             availability.save()
