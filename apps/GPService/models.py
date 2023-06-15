@@ -9,7 +9,7 @@ from unittest.util import _MAX_LENGTH
 from django.db import models
 from django.utils import timezone
 from django.db.models import Q
-from apps.users.models import Doctor, Pharmacy, User
+from apps.users.models import Doctor, Pharmacy, User, Patient
 from apps.files.models import File
 from rest_framework.exceptions import ValidationError
 
@@ -65,7 +65,7 @@ class Availability(models.Model):
                             super().save(*args, **kwargs)
 
 class Appointment(models.Model):
-    patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments')
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='appointments')
     availability = models.ForeignKey(Availability, on_delete=models.CASCADE, related_name='appointments')
     status = models.CharField(
         max_length=15,
