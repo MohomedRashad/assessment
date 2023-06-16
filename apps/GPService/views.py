@@ -7,7 +7,7 @@ from django.db.models import Q
 from rest_framework import status
 from apps.users.permissions import DoctorWriteOnly, IsAllowedToAccessAssessment, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
 from apps.users.models import Pharmacy, Roles
-from .models import AppointmentStatus, FormAssessmentType, PharmacyReviewStatus, Availability, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
+from .models import AppointmentStatus, FormAssessmentType, OrderType, PharmacyReviewStatus, Availability, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
 from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, PrescriptionSerializer, OrderSerializer, PharmacySerializer
 from datetime import datetime
 from django.utils import timezone
@@ -220,9 +220,9 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user.role == Roles.DOCTOR:
-            return FormAssessment.objects.filter(Q(doctor=self.request.user) | Q(doctor__isnull=True))
+            return FormAssessment.objects.filter(Q(doctor=self.request.user.doctor) | Q(doctor__isnull=True))
         elif self.request.user.role == Roles.PATIENT:
-            return FormAssessment.objects.filter(patient=self.request.user)
+            return FormAssessment.objects.filter(patient=self.request.user.patient)
         elif self.request.user.role == Roles.SUPER_ADMIN:
             return FormAssessment.objects.all()
 
@@ -237,7 +237,7 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
         else:
             #creating a form assessment instance
             form_assessment = FormAssessment(
-                patient = self.request.user,
+                patient = self.request.user.patient,
                 type = self.request.data.get('type'))
             form_assessment.save()
             #Adding the answers to the database.
@@ -284,22 +284,21 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
             form_assessment = get_object_or_404(FormAssessment, id = form_assessment_id)
             queryset = FormAssessmentFeedback.objects.filter(form_assessment = form_assessment_id)
             if self.request.user.role == Roles.DOCTOR:
-                if form_assessment.doctor is not None and form_assessment.doctor != self.request.user:
+                if form_assessment.doctor is not None and form_assessment.doctor != self.request.user.doctor:
                     raise PermissionDenied
             elif self.request.user.role == Roles.PATIENT:
-                if form_assessment.patient != self.request.user:
+                if form_assessment.patient != self.request.user.patient:
                     raise PermissionDenied
             serializer = ViewFormAssessmentFeedbackSerializer(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         if request.method == 'POST':
             #assumption: only the doctor user type can invoke the modification of a form assessment
-            #A form assessment will only be updated when a doctor performs an assessment of an existing form.
             form_assessment = get_object_or_404(FormAssessment, pk = form_assessment_id)
-            if form_assessment.is_assessed and form_assessment.doctor != self.request.user:
+            if form_assessment.is_assessed and form_assessment.doctor != self.request.user.doctor:
                 raise ValidationError("This form assessment has already been assessed by another doctor")
             else:
                     #updating the form assessment instance with the doctor details
-                    form_assessment.doctor = self.request.user
+                    form_assessment.doctor = self.request.user.doctor
                     form_assessment.is_assessed = True
                     form_assessment.assessed_date = datetime.today()
                     form_assessment.save()
@@ -322,7 +321,7 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
         form_assessment = get_object_or_404(FormAssessment, pk = form_assessment_id)
         if not 'provided_feedback' in self.request.data:
             raise ValidationError("The provided_feedback is required.")
-        elif form_assessment.doctor != self.request.user:
+        elif form_assessment.doctor != self.request.user.doctor:
             raise  ValidationError("You are not authorized to update the form assessment feedback")
         else:
             #updating the feedback
