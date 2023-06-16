@@ -157,9 +157,9 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
         if user.role == Roles.SUPER_ADMIN:
             return Prescription.objects.all()
         elif user.role == Roles.DOCTOR:
-            return Prescription.objects.filter(Q(appointment__availability__doctor = self.request.user) | Q(form_assessment__doctor = self.request.user))
+            return Prescription.objects.filter(Q(appointment__availability__doctor=self.request.user.doctor) | Q(form_assessment__doctor=self.request.user.doctor))
         elif user.role == Roles.PATIENT:
-            return Prescription.objects.filter(Q(appointment__patient = self.request.user) | Q(form_assessment__patient = self.request.user))
+            return Prescription.objects.filter(Q(appointment__patient=self.request.user.patient) | Q(form_assessment__patient=self.request.user.patient))
         elif user.role == Roles.PHARMACY:
             return Prescription.objects.filter(pharmacy = self.request.user)
 
@@ -336,9 +336,9 @@ class OrderViewSet(viewsets.ViewSet):
         type = self.request.query_params.get('type')
         queryset = Order.objects.all()
         if self.request.user.role == Roles.DOCTOR:
-            queryset = queryset.filter(Q(appointment__availability__doctor = self.request.user) | Q(form_assessment__doctor = self.request.user))
+            queryset = queryset.filter(Q(appointment__availability__doctor=self.request.user.doctor) | Q(form_assessment__doctor=self.request.user.doctor))
         elif self.request.user.role == Roles.PATIENT:
-            queryset = queryset.filter(Q(appointment__patient = self.request.user) | Q(form_assessment__patient = self.request.user))
+            queryset = queryset.filter(Q(appointment__patient=self.request.user.patient) | Q(form_assessment__patient=self.request.user.patient))
         elif self.request.user.role == Roles.PHARMACY:
             #todo
             print("Should implement the pharmacy logic")
