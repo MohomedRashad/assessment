@@ -106,14 +106,14 @@ class FormAssessmentQuestion(models.Model):
 
 class FormAssessment(models.Model):
     patient = models.ForeignKey(
-        User,
+        Patient,
         on_delete=models.CASCADE,
         related_name='patient_formassessments',
         blank=True,
         null=True
         )
     doctor = models.ForeignKey(
-        User,
+        Doctor,
         on_delete=models.CASCADE,
         blank=True,
         null=True,
