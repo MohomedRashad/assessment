@@ -113,3 +113,12 @@ class IsAllowedToAccessAssessment(BasePermission):
             if obj.patient != request.user:
                 return False
         return True
+
+class PharmacyOrDoctor(BasePermission):
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS and request.user.role != Roles.PATIENT:
+            return True
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS and request.user.role != Roles.PATIENT:
+            return True
