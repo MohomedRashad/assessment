@@ -63,7 +63,7 @@ class DoctorWriteOnly(BasePermission):
         if request.method in SAFE_METHODS and request.user.role != Roles.PHARMACY:
             return True
 
-        return obj.doctor == request.user
+        return obj.doctor == request.user.doctor
 
 class PharmacyOrReadOnly(BasePermission):
     def has_permission(self, request, view):
@@ -102,7 +102,7 @@ class PatientWriteOnly(BasePermission):
         if request.method in SAFE_METHODS and request.user.role != Roles.PHARMACY:
             return True
 
-        return obj.patient == request.user
+        return obj.patient == request.user.patient
 
 class IsAllowedToAccessAssessment(BasePermission):
     def has_object_permission(self, request, view, obj):
@@ -113,3 +113,12 @@ class IsAllowedToAccessAssessment(BasePermission):
             if obj.patient != request.user:
                 return False
         return True
+
+class PharmacyOrDoctor(BasePermission):
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS and request.user.role != Roles.PATIENT:
+            return True
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS and request.user.role != Roles.PATIENT:
+            return True
