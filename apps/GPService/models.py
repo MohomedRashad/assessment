@@ -184,7 +184,6 @@ class Prescription(models.Model):
         default= PharmacyReviewStatus.PENDING
         )
     reason_for_rejection = models.TextField(blank=True, null=True)
-
     class Meta:
         constraints = [
             models.CheckConstraint(
@@ -192,7 +191,6 @@ class Prescription(models.Model):
                 name='one_record_constraint'
             )
         ]
-
 
 class Order(models.Model):
     type = models.CharField(
@@ -220,3 +218,8 @@ class RecommendedVaccine(models.Model)    :
     country = models.ForeignKey(Country, on_delete=models.CASCADE, related_name='recommended_vaccines')
     medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, blank=True, null=True, related_name='recommended_vaccines')
     posted_date = models.DateTimeField(auto_now_add=True)
+
+class PharmacyNotification(models.Model):
+    pharmacy = models.ForeignKey(Pharmacy, on_delete=models.CASCADE, related_name='pharmacy_notifications')
+    is_read = models.BooleanField(default=False)
+    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE, related_name='pharmacy_notifications')

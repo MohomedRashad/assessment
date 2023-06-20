@@ -31,7 +31,7 @@ def create_user(validated_data):
     elif validated_data['role'] == Roles.DOCTOR:
         Doctor.objects.create(user=instance)
     elif validated_data['role'] == Roles.PATIENT:
-        Patient.objects.create(user=instance)
+        Patient.objects.create(user=instance, postal_code=validated_data['postal_code'])
 
     return instance
 
@@ -63,7 +63,7 @@ class AuthRegisterSerializer(serializers.ModelSerializer):
         try:
             user = create_user(validated_data)
             if settings.VERIFY_EMAIL:
-                user.is_active = False
+                user.is_active = True
                 user.save()
                 user.generate_email_verification_code()
             return user

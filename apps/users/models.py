@@ -83,3 +83,5 @@ class Patient(models.Model):
     weight = models.FloatField(blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     medical_history = models.TextField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    postal_code = models.PositiveIntegerField()

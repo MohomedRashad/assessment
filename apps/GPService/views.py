@@ -5,14 +5,14 @@ from rest_framework.views import APIView
 from django.http import Http404
 from django.db.models import Q
 from rest_framework import status
-from apps.users.permissions import DoctorWriteOnly, IsAllowedToAccessAssessment, PharmacyOrDoctor, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
+from apps.users.permissions import DoctorWriteOnly, IsAllowedToAccessAssessment, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
 from apps.users.models import Pharmacy, Roles
-from .models import AppointmentStatus, FormAssessmentType, OrderType, PharmacyReviewStatus, Availability, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, PrescriptionSerializer, OrderSerializer, PharmacySerializer
+from .models import AppointmentStatus, FormAssessmentType, OrderType, PharmacyNotification, PharmacyReviewStatus, Availability, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, PharmacyNotificationSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, PrescriptionSerializer, OrderSerializer, PharmacySerializer
 from datetime import datetime
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-from .services import check_meeting_slot_time, create_order
+from .services import check_meeting_slot_time, create_order, send_prescription_notification_to_pharmacy
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from rest_framework.response import Response
@@ -152,9 +152,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
     serializer_class = PrescriptionSerializer
-    permission_classes = [PharmacyOrDoctor]
 
     def get_queryset(self):
+        user = self.request.user
         if user.role == Roles.SUPER_ADMIN:
             return Prescription.objects.all()
         elif user.role == Roles.DOCTOR:
@@ -174,13 +174,21 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
         # Add the related medicines to the prescription in bulk using set method
         prescription.medicines.add(*medicines)
 
-    def perform_update(self, serializer):
-        validated_data = serializer.validated_data
+    @transaction.atomic
+    def perform_update(self, instance):
+        validated_data = instance.validated_data
         # Check if the pharmacy_review_status is rejected and reason_for_rejection is not provided
-        if validated_data['pharmacy_review_status'] == 'REJECTED' and 'reason_for_rejection' not in validated_data:
+        if 'pharmacy_review_status' in validated_data and validated_data['pharmacy_review_status'] == 'REJECTED' and 'reason_for_rejection' not in validated_data:
             raise ValidationError('Reason for rejection is required when pharmacy review status is rejected.')
+        elif 'is_accepted' in validated_data and validated_data['is_accepted'] == True:
+            #If the patient accepted the prescription, the pharmacy should get a notification
+            prescription = instance.save()
+            #the pharmacy to which the notification should be sent will be determined by the postal code
+            #todo: obtain the respective pharmacy based on the patient's postal code
+            pharmacy = Pharmacy.objects.get(pk=1)
+            send_prescription_notification_to_pharmacy(pharmacy, prescription)
         else:
-            super().perform_update(serializer)
+            super().perform_update(instance)
 
 class MedicineViewSet(viewsets.ModelViewSet):
     queryset = Medicine.objects.all()
@@ -355,3 +363,9 @@ class PharmacyViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         raise MethodNotAllowed("POST", detail="Creating new pharmacies is not allowed.")
+
+    @action(methods=['get'], detail=False, url_path='(?P<pharmacy_id>[^/.]+)/notifications')
+    def retrieve_notifications_for_a_given_pharmacy(self, request, pharmacy_id):
+        queryset = PharmacyNotification.objects.filter(pharmacy__id=pharmacy_id)
+        serializer = PharmacyNotificationSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

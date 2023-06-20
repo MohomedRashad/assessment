@@ -1,6 +1,6 @@
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
-from apps.GPService.models import Order
+from apps.GPService.models import Order, PharmacyNotification
 
 def check_meeting_slot_time(starting_time, ending_time):
     start_time = datetime.strptime(starting_time.isoformat(), "%H:%M:%S")
@@ -28,3 +28,10 @@ def create_order(type, total_amount, **kwargs):
             order.save()
     else:
         raise ValidationError("Invalid order type!")
+
+def send_prescription_notification_to_pharmacy(pharmacy, prescription):
+    pharmacy_notification = PharmacyNotification(pharmacy=pharmacy, prescription=prescription)
+    pharmacy_notification.save()
+    print("Notification for the pharmacy has been sent")
+
+
