@@ -192,7 +192,7 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
             if pharmacy is not None:
                 send_prescription_notification_to_pharmacy(pharmacy, prescription)
             else:
-                raise ValidationError("Unable to obtained the pharmacy which was pree-selected by the patient")
+                raise ValidationError("Unable to obtain the pharmacy which was pree-selected by the patient")
         else:
             if 'pharmacy_review_status' in validated_data:
                 #todo: should implement a logic to update the read status of the pharmacy notification for the current prescription.
