@@ -31,7 +31,7 @@ def create_user(validated_data):
     elif validated_data['role'] == Roles.DOCTOR:
         Doctor.objects.create(user=instance)
     elif validated_data['role'] == Roles.PATIENT:
-        Patient.objects.create(user=instance, postal_code=validated_data['postal_code'])
+        Patient.objects.create(user=instance)
 
     return instance
 
