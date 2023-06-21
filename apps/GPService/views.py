@@ -12,7 +12,7 @@ from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppoi
 from datetime import datetime
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-from .services import check_meeting_slot_time, create_order, send_prescription_notification_to_pharmacy
+from .services import check_meeting_slot_time, create_order, obtain_the_selected_pharmacy_of_the_patient, send_prescription_notification_to_pharmacy
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from rest_framework.response import Response
@@ -154,18 +154,18 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
     serializer_class = PrescriptionSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        if user.role == Roles.SUPER_ADMIN:
+        if self.request.user.role == Roles.SUPER_ADMIN:
             return Prescription.objects.all()
-        elif user.role == Roles.DOCTOR:
+        elif self.request.user.role == Roles.DOCTOR:
             return Prescription.objects.filter(Q(appointment__availability__doctor=self.request.user.doctor) | Q(form_assessment__doctor=self.request.user.doctor))
-        elif user.role == Roles.PATIENT:
+        elif self.request.user.role == Roles.PATIENT:
             return Prescription.objects.filter(Q(appointment__patient=self.request.user.patient) | Q(form_assessment__patient=self.request.user.patient))
-        elif user.role == Roles.PHARMACY:
+        elif self.request.user.role == Roles.PHARMACY:
             return Prescription.objects.filter(pharmacy = self.request.user)
 
     def perform_create(self, serializer):
-        # Validate and save the medicine instances into a new dictionary before continuing
+        #todo: should implement validation checks to ensure only the doctor user type can add prescriptions
+        # Validate and get the medicine instances into a new dictionary before continuing
         medicines = []
         for medicine_id in self.request.data.pop('medicine', []):
             medicine = get_object_or_404(Medicine, id=medicine_id)
@@ -176,19 +176,29 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_update(self, instance):
+        #todo: should implement proper permission and user type validations to allow specific data to be updated in the prescription instance
         validated_data = instance.validated_data
         # Check if the pharmacy_review_status is rejected and reason_for_rejection is not provided
         if 'pharmacy_review_status' in validated_data and validated_data['pharmacy_review_status'] == 'REJECTED' and 'reason_for_rejection' not in validated_data:
-            raise ValidationError('Reason for rejection is required when pharmacy review status is rejected.')
+            raise ValidationError('Reason for rejection is required when pharmacy review status is set to rejected.')
         elif 'is_accepted' in validated_data and validated_data['is_accepted'] == True:
-            #If the patient accepted the prescription, the pharmacy should get a notification
+            #todo: should implement a logic to update the is_accepted field only once.
+            #todo: only the patient user type can update the is_accepted property of a prescription
             prescription = instance.save()
-            #the pharmacy to which the notification should be sent will be determined by the postal code
-            #todo: obtain the respective pharmacy based on the patient's postal code
-            pharmacy = Pharmacy.objects.get(pk=1)
-            send_prescription_notification_to_pharmacy(pharmacy, prescription)
+            #If the patient accepted the prescription, the related pharmacy should get a notification
+            #The pharmacy will be pree-selected by the patient in the beginning
+            pharmacy = obtain_the_selected_pharmacy_of_the_patient(prescription)
+            #Making sure the returned pharmacy object is a valid one before sending the notification
+            if pharmacy is not None:
+                send_prescription_notification_to_pharmacy(pharmacy, prescription)
+            else:
+                raise ValidationError("Unable to obtained the pharmacy which was pree-selected by the patient")
         else:
-            super().perform_update(instance)
+            if 'pharmacy_review_status' in validated_data:
+                #todo: should implement a logic to update the read status of the pharmacy notification for the current prescription.
+                super().perform_update(instance)
+            else:
+                super().perform_update(instance)
 
 class MedicineViewSet(viewsets.ModelViewSet):
     queryset = Medicine.objects.all()
@@ -366,6 +376,7 @@ class PharmacyViewSet(viewsets.ModelViewSet):
 
     @action(methods=['get'], detail=False, url_path='(?P<pharmacy_id>[^/.]+)/notifications')
     def retrieve_notifications_for_a_given_pharmacy(self, request, pharmacy_id):
+        #todo: should implement a way to filter the notifications by read status
         queryset = PharmacyNotification.objects.filter(pharmacy__id=pharmacy_id)
         serializer = PharmacyNotificationSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
