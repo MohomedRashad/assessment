@@ -89,7 +89,7 @@ class Medicine(models.Model):
         choices=MedicineType.choices,
         )
     available_quantity = models.PositiveIntegerField()
-    price = models.DecimalField(max_digits=6, decimal_places=2, validators=[MinValueValidator(1)])
+    price = models.PositiveIntegerField(blank=True, null=True)
 
 class Treatment(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -184,6 +184,7 @@ class Prescription(models.Model):
         default= PharmacyReviewStatus.PENDING
         )
     reason_for_rejection = models.TextField(blank=True, null=True)
+    total_amount = models.PositiveIntegerField(blank=True, null=True)
 
     class Meta:
         constraints = [

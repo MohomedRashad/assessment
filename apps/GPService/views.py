@@ -5,10 +5,10 @@ from rest_framework.views import APIView
 from django.http import Http404
 from django.db.models import Q
 from rest_framework import status
-from apps.users.permissions import DoctorWriteOnly, IsAllowedToAccessAssessment, PharmacyOrDoctor, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
+from apps.users.permissions import DoctorWriteOnly, IsAllowedToAccessAssessment, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
 from apps.users.models import Pharmacy, Roles
 from .models import AppointmentStatus, FormAssessmentType, OrderType, PharmacyReviewStatus, Availability, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, PrescriptionSerializer, OrderSerializer, PharmacySerializer
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, PrescriptionSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, SimplePrescriptionSerializer, OrderSerializer, PharmacySerializer
 from datetime import datetime
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -151,10 +151,19 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 super().perform_update(serializer)
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
-    serializer_class = PrescriptionSerializer
-    permission_classes = [PharmacyOrDoctor]
+    serializer_class = SimplePrescriptionSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'create' or self.action == 'update':
+            return PrescriptionSerializer
+        elif self.action == 'create':
+            return AddAppointmentSerializer
+        return super(PrescriptionViewSet, self).get_serializer_class()
 
     def get_queryset(self):
+        #dummy code
+        return Prescription.objects.all()
+        user = self.request.user
         if user.role == Roles.SUPER_ADMIN:
             return Prescription.objects.all()
         elif user.role == Roles.DOCTOR:
@@ -165,14 +174,19 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
             return Prescription.objects.filter(pharmacy = self.request.user)
 
     def perform_create(self, serializer):
+        prescription = serializer.save()
         # Validate and save the medicine instances into a new dictionary before continuing
         medicines = []
-        for medicine_id in self.request.data.pop('medicine', []):
+        total_amount = 0
+        for medicine_id in self.request.data.pop('medicines', []):
             medicine = get_object_or_404(Medicine, id=medicine_id)
             medicines.append(medicine)
-        prescription = serializer.save()
-        # Add the related medicines to the prescription in bulk using set method
+            #calculating the price of the current medicine by multiplying with the prescribe quantity
+            total_amount += medicine.price * prescription.prescribed_quantity
+        # Add the related medicines to the prescription in bulk
         prescription.medicines.add(*medicines)
+        #add the calculated total amount for all prescribed medicines to the prescription instance
+        prescription.total_amount = total_amount
 
     def perform_update(self, serializer):
         validated_data = serializer.validated_data
