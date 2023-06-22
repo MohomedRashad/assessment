@@ -125,8 +125,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         availability = get_object_or_404(Availability, id = appointment.availability.id)
         if not 'status' in self.request.data:
             raise ValidationError("The status has not been provided")
-        # elif appointment.status == AppointmentStatus.COMPLETED:
-        #     raise ValidationError("This appointment cannot be modified as it has already been completed")
+        elif appointment.status == AppointmentStatus.COMPLETED:
+            raise ValidationError("This appointment cannot be modified as it has already been completed")
         elif self.request.data['status'] == AppointmentStatus.CANCELED:
             #An appointment can be deleted only if the current status is set to 'BOOKED'
             if appointment.status == AppointmentStatus.ONGOING:

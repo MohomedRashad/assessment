@@ -188,7 +188,7 @@ class Prescription(models.Model):
         default= PharmacyReviewStatus.PENDING
         )
     reason_for_rejection = models.TextField(blank=True, null=True)
-    total_amount = models.PositiveIntegerField(blank=True, null=True)
+    total_amount = models.PositiveIntegerField(default=0)
 
     class Meta:
         constraints = [
