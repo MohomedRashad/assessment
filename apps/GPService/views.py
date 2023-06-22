@@ -5,14 +5,14 @@ from rest_framework.views import APIView
 from django.http import Http404
 from django.db.models import Q
 from rest_framework import status
-from apps.users.permissions import DoctorWriteOnly, IsAllowedToAccessAssessment, PharmacyOrDoctor, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
+from apps.users.permissions import DoctorWriteOnly, IsAllowedToAccessAssessment, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
 from apps.users.models import Pharmacy, Roles
 from .models import AppointmentStatus, FormAssessmentType, OrderType, PharmacyReviewStatus, Availability, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, PrescriptionSerializer, OrderSerializer, PharmacySerializer
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, PrescriptionSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, SimplePrescriptionSerializer, OrderSerializer, PharmacySerializer
 from datetime import datetime
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-from .services import check_meeting_slot_time, create_order
+from .services import check_meeting_slot_time, create_order, set_the_associated_order_status_to_completed
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from rest_framework.response import Response
@@ -151,10 +151,15 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 super().perform_update(serializer)
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
-    serializer_class = PrescriptionSerializer
-    permission_classes = [PharmacyOrDoctor]
+    serializer_class = SimplePrescriptionSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'create' or self.action == 'update':
+            return PrescriptionSerializer
+        return super(PrescriptionViewSet, self).get_serializer_class()
 
     def get_queryset(self):
+        user = self.request.user
         if user.role == Roles.SUPER_ADMIN:
             return Prescription.objects.all()
         elif user.role == Roles.DOCTOR:
@@ -165,22 +170,41 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
             return Prescription.objects.filter(pharmacy = self.request.user)
 
     def perform_create(self, serializer):
+        prescription = serializer.save()
         # Validate and save the medicine instances into a new dictionary before continuing
         medicines = []
-        for medicine_id in self.request.data.pop('medicine', []):
+        total_amount = 0
+        for medicine_id in self.request.data.pop('medicines', []):
             medicine = get_object_or_404(Medicine, id=medicine_id)
             medicines.append(medicine)
-        prescription = serializer.save()
-        # Add the related medicines to the prescription in bulk using set method
+            #calculating the price of the current medicine by multiplying with the prescribe quantity
+            total_amount += medicine.price * prescription.prescribed_quantity
+        # Add the related medicines to the prescription in bulk
         prescription.medicines.add(*medicines)
+        #add the calculated total amount for all prescribed medicines to the prescription instance
+        prescription.total_amount = total_amount
+        prescription.save()
 
-    def perform_update(self, serializer):
-        validated_data = serializer.validated_data
+    @transaction.atomic
+    def perform_update(self, instance):
+        current_prescription_data = self.get_object()
+        #todo: should implement proper permission and user type validations to allow specific data to be updated in the prescription instance
+        validated_data = instance.validated_data
         # Check if the pharmacy_review_status is rejected and reason_for_rejection is not provided
-        if validated_data['pharmacy_review_status'] == 'REJECTED' and 'reason_for_rejection' not in validated_data:
-            raise ValidationError('Reason for rejection is required when pharmacy review status is rejected.')
+        if 'pharmacy_review_status' in validated_data and validated_data['pharmacy_review_status'] == 'REJECTED' and 'reason_for_rejection' not in validated_data:
+            raise ValidationError('Reason for rejection is required when pharmacy review status is set to rejected.')
+        elif 'is_accepted' in validated_data:
+            #todo: only the patient user type can update the is_accepted property of a prescription
+            prescription = instance.save()
+            #Updating the associated order status to completed
+            order = set_the_associated_order_status_to_completed(prescription)
+            #if the patient has accepted the given prescription, adding the prescription amount to the order amount
+            #If the patient has accepted the prescription before, a logic to prevent re updating the order amount
+            if prescription.is_accepted == True and current_prescription_data.is_accepted == False:
+                order.total_amount += prescription.total_amount
+                order.save()
         else:
-            super().perform_update(serializer)
+            super().perform_update(instance)
 
 class MedicineViewSet(viewsets.ModelViewSet):
     queryset = Medicine.objects.all()

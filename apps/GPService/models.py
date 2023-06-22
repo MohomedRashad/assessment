@@ -33,6 +33,10 @@ class OrderType(models.TextChoices):
     FORM_ASSESSMENT = 'FORM_ASSESSMENT', _('FORM_ASSESSMENT')
     VIDEO_ASSESSMENT = 'VIDEO_ASSESSMENT', _('VIDEO_ASSESSMENT')
 
+class OrderStatus(models.TextChoices):
+    PENDING = 'PENDING', _('PENDING')
+    COMPLETED = 'COMPLETED', _('COMPLETED')
+
 class PharmacyReviewStatus(models.TextChoices):
     ACCEPTED = 'ACCEPTED', _('ACCEPTED')
     REJECTED = 'REJECTED', _('REJECTED')
@@ -88,8 +92,8 @@ class Medicine(models.Model):
         max_length=50,
         choices=MedicineType.choices,
         )
-    available_quantity = models.PositiveIntegerField()
-    price = models.DecimalField(max_digits=6, decimal_places=2, validators=[MinValueValidator(1)])
+    available_quantity = models.PositiveIntegerField ()
+    price = models.PositiveIntegerField(default=0)
 
 class Treatment(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -184,6 +188,7 @@ class Prescription(models.Model):
         default= PharmacyReviewStatus.PENDING
         )
     reason_for_rejection = models.TextField(blank=True, null=True)
+    total_amount = models.PositiveIntegerField(default=0)
 
     class Meta:
         constraints = [
@@ -210,6 +215,10 @@ class Order(models.Model):
     blank=True,
     related_name='order'
     )
+    status = models.CharField(
+        max_length=10,
+        choices=OrderStatus.choices,
+        default=OrderStatus.PENDING)
     created_date = models.DateTimeField(auto_now_add=True)
     total_amount = models.PositiveIntegerField(blank=True, null=True)
 

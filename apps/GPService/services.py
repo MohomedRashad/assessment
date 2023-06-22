@@ -1,6 +1,6 @@
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
-from apps.GPService.models import Order
+from apps.GPService.models import Order, OrderStatus
 
 def check_meeting_slot_time(starting_time, ending_time):
     start_time = datetime.strptime(starting_time.isoformat(), "%H:%M:%S")
@@ -28,3 +28,18 @@ def create_order(type, total_amount, **kwargs):
             order.save()
     else:
         raise ValidationError("Invalid order type!")
+
+def set_the_associated_order_status_to_completed(prescription):
+    # A logic check to identify whether an appointment or a form assessment is in the prescription
+    if prescription.appointment is not None:
+        order = prescription.appointment.order
+        order.status = OrderStatus.COMPLETED
+        order.save()
+        return order
+    elif prescription.form_assessment is not None:
+        order = prescription.form_assessment.order
+        order.status = OrderStatus.COMPLETED
+        order.save()
+        return order
+    else:
+        raise ValidationError("An error has occurred when trying to set the order status to completed")
