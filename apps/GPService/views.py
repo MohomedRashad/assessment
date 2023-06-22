@@ -187,6 +187,7 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_update(self, instance):
+        current_prescription_data = self.get_object()
         #todo: should implement proper permission and user type validations to allow specific data to be updated in the prescription instance
         validated_data = instance.validated_data
         # Check if the pharmacy_review_status is rejected and reason_for_rejection is not provided
@@ -198,7 +199,8 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
             #Updating the associated order status to completed
             order = set_the_associated_order_status_to_completed(prescription)
             #if the patient has accepted the given prescription, adding the prescription amount to the order amount
-            if prescription.is_accepted == True:
+            #If the patient has accepted the prescription before, a logic to prevent re updating the order amount
+            if prescription.is_accepted == True and current_prescription_data.is_accepted == False:
                 order.total_amount += prescription.total_amount
                 order.save()
         else:
