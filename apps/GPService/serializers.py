@@ -108,11 +108,13 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prescription
         fields = '__all__'
+        read_only_fields = ['total_amount']
         extra_kwargs = {
             'prescribed_quantity': {'required': False},
             'pharmacy': {'required': False},
             'pharmacy_review_status': {'required': False},
             'reason_for_rejection': {'required': False},
+            'medicines': {'required': False},
         }
 
 class OrderSerializer(serializers.ModelSerializer):

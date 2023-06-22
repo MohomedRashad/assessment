@@ -12,7 +12,7 @@ from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppoi
 from datetime import datetime
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-from .services import check_meeting_slot_time, create_order
+from .services import check_meeting_slot_time, create_order, set_the_associated_order_status_to_completed
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from rest_framework.response import Response
@@ -125,8 +125,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         availability = get_object_or_404(Availability, id = appointment.availability.id)
         if not 'status' in self.request.data:
             raise ValidationError("The status has not been provided")
-        elif appointment.status == AppointmentStatus.COMPLETED:
-            raise ValidationError("This appointment cannot be modified as it has already been completed")
+        # elif appointment.status == AppointmentStatus.COMPLETED:
+        #     raise ValidationError("This appointment cannot be modified as it has already been completed")
         elif self.request.data['status'] == AppointmentStatus.CANCELED:
             #An appointment can be deleted only if the current status is set to 'BOOKED'
             if appointment.status == AppointmentStatus.ONGOING:
@@ -156,13 +156,9 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'create' or self.action == 'update':
             return PrescriptionSerializer
-        elif self.action == 'create':
-            return AddAppointmentSerializer
         return super(PrescriptionViewSet, self).get_serializer_class()
 
     def get_queryset(self):
-        #dummy code
-        return Prescription.objects.all()
         user = self.request.user
         if user.role == Roles.SUPER_ADMIN:
             return Prescription.objects.all()
@@ -187,14 +183,26 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
         prescription.medicines.add(*medicines)
         #add the calculated total amount for all prescribed medicines to the prescription instance
         prescription.total_amount = total_amount
+        prescription.save()
 
-    def perform_update(self, serializer):
-        validated_data = serializer.validated_data
+    @transaction.atomic
+    def perform_update(self, instance):
+        #todo: should implement proper permission and user type validations to allow specific data to be updated in the prescription instance
+        validated_data = instance.validated_data
         # Check if the pharmacy_review_status is rejected and reason_for_rejection is not provided
-        if validated_data['pharmacy_review_status'] == 'REJECTED' and 'reason_for_rejection' not in validated_data:
-            raise ValidationError('Reason for rejection is required when pharmacy review status is rejected.')
+        if 'pharmacy_review_status' in validated_data and validated_data['pharmacy_review_status'] == 'REJECTED' and 'reason_for_rejection' not in validated_data:
+            raise ValidationError('Reason for rejection is required when pharmacy review status is set to rejected.')
+        elif 'is_accepted' in validated_data:
+            #todo: only the patient user type can update the is_accepted property of a prescription
+            prescription = instance.save()
+            #Updating the associated order status to completed
+            order = set_the_associated_order_status_to_completed(prescription)
+            #if the patient has accepted the given prescription, adding the prescription amount to the order amount
+            if prescription.is_accepted == True:
+                order.total_amount += prescription.total_amount
+                order.save()
         else:
-            super().perform_update(serializer)
+            super().perform_update(instance)
 
 class MedicineViewSet(viewsets.ModelViewSet):
     queryset = Medicine.objects.all()
