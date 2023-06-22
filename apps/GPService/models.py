@@ -93,7 +93,7 @@ class Medicine(models.Model):
         choices=MedicineType.choices,
         )
     available_quantity = models.PositiveIntegerField ()
-    price = models.PositiveIntegerField(blank=True, null=True)
+    price = models.PositiveIntegerField(default=0)
 
 class Treatment(models.Model):
     name = models.CharField(max_length=100, unique=True)
