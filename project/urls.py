@@ -25,7 +25,7 @@ from rest_framework.routers import DefaultRouter
 
 from apps.files.views import FileViewSet
 from apps.users.views import AuthViewSet, UserViewSet
-from apps.GPService.views import AvailabilityViewSet, AppointmentViewSet, MedicineViewSet, RecommendedVaccineViewSet, FormAssessmentQuestionViewSet, FormAssessmentViewSet, PrescriptionViewSet, OrderViewSet, PharmacyViewSet
+from apps.GPService.views import AvailabilityViewSet, AppointmentViewSet, InvoiceViewSet, MedicineViewSet, RecommendedVaccineViewSet, FormAssessmentQuestionViewSet, FormAssessmentViewSet, PrescriptionViewSet, OrderViewSet, PharmacyViewSet
 
 router = DefaultRouter()
 router.register('auth', AuthViewSet, basename='auth')
@@ -39,6 +39,7 @@ router.register('medicines', MedicineViewSet, basename='medicines')
 router.register('recommendedvacines', RecommendedVaccineViewSet, basename='recommendedvacines')
 router.register('form-assessments', FormAssessmentViewSet, basename='form-assessments')
 router.register('orders', OrderViewSet, basename='orders')
+router.register('invoices', InvoiceViewSet, basename='invoices')
 router.register('pharmacies', PharmacyViewSet, basename='pharmacies')
 
 urlpatterns = [
