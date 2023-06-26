@@ -243,9 +243,9 @@ class Invoice(models.Model):
     date = models.DateField(default=timezone.now)
     invoice = models.TextField()
     payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices, default=PaymentMethod.BANKTRANSFER)
-    payment_date = models.DateField(default=None, blank=True, null=True)
+    payment_date = models.DateField(default=timezone.now)
     delivery_status = models.CharField(max_length=20, choices=DeliveryStatus.choices, default=DeliveryStatus.PENDING)
-    payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
+    payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PAYED)
 
     def __str__(self):
         return self.invoice_number
