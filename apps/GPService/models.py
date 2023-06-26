@@ -42,6 +42,21 @@ class PharmacyReviewStatus(models.TextChoices):
     REJECTED = 'REJECTED', _('REJECTED')
     PENDING = 'PENDING', _('PENDING')
 
+class PaymentMethod(models.TextChoices):
+    CREDITCARD = 'CREDITCARD', _('CREDITCARD')
+    DEBITCARD = 'DEBITCARD', _('DEBITCARD')
+    BANKTRANSFER = 'BANKTRANSFER', _('BANKTRANSFER')
+
+class DeliveryStatus(models.TextChoices):
+    PENDING = 'PENDING', _('PENDING')
+    SHIPPED = 'SHIPPED', _('SHIPPED')
+    DELIVERED = 'DELIVERED', _('DELIVERED')
+
+class PaymentStatus(models.TextChoices):
+    PENDING = 'PENDING', _('PENDING')
+    PAYED = 'PAYED', _('PAYED')
+    OVERDUE = 'OVERDUE', _('OVERDUE')
+
 #Models
 class Availability(models.Model):
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='availabilities')
@@ -227,6 +242,10 @@ class Invoice(models.Model):
     invoice_number = models.CharField(max_length=20, unique=True)
     date = models.DateField(default=timezone.now)
     invoice = models.TextField()
+    payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices, default=PaymentMethod.BANKTRANSFER)
+    payment_date = models.DateField(default=None, blank=True, null=True)
+    delivery_status = models.CharField(max_length=20, choices=DeliveryStatus.choices, default=DeliveryStatus.PENDING)
+    payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
 
     def __str__(self):
         return self.invoice_number
