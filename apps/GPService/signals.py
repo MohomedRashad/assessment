@@ -9,23 +9,8 @@ def generate_invoice(sender, created, instance, **kwargs):
     if instance.status == OrderStatus.COMPLETED:
                 # Generate a unique invoice number
         invoice_number = generate_unique_invoice_number()
-        # Generate the invoice text
-        invoice_text = "GPSERVICE INVOICE\n\n"
-        invoice_text += f"Invoice number: {invoice_number}\n"
-        invoice_text += f"Date: {date.today()}\n"
-        invoice_text += "Patient Information:\n"
-        invoice_text += f"Name: Rashad\n"
-        invoice_text += f"Address: testing address\n"
-        invoice_text += f"Date of Birth: 2012-12-21\n"
-        invoice_text += f"Gender: Male\n"
-        invoice_text += f"Email: testing@email.com\n"
-        invoice_text += f"Invoice for Order #{instance.pk}\n"
-        invoice_text += f"Order type: {instance.type}\n"
-        invoice_text += f"Total Amount: {instance.total_amount}\n"
-        invoice_text += "Thank you for your purchase!"
-        invoice = Invoice(order=instance, invoice_number=invoice_number, invoice=invoice_text)
+        invoice = Invoice(order=instance, invoice_number=invoice_number)
         invoice.save()
-        print(invoice_text)
 
 def generate_unique_invoice_number():
     # Generate a unique UUID
