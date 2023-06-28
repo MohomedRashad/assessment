@@ -224,7 +224,7 @@ class Order(models.Model):
     blank=True,
     related_name='order'
     )
-    form_assessment = models.OneToOneField(FormAssessment,   
+    form_assessment = models.OneToOneField(FormAssessment,
     on_delete=models.CASCADE,
     null=True,
     blank=True,
@@ -234,6 +234,7 @@ class Order(models.Model):
         max_length=10,
         choices=OrderStatus.choices,
         default=OrderStatus.PENDING)
+    payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices, default=PaymentMethod.BANKTRANSFER)
     created_date = models.DateTimeField(auto_now_add=True)
     total_amount = models.PositiveIntegerField(blank=True, null=True)
 
@@ -241,7 +242,6 @@ class Invoice(models.Model):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='invoice')
     invoice_number = models.CharField(max_length=20, unique=True)
     date = models.DateField(default=timezone.now)
-    payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices, default=PaymentMethod.BANKTRANSFER)
     payment_date = models.DateField(default=timezone.now)
     delivery_status = models.CharField(max_length=20, choices=DeliveryStatus.choices, default=DeliveryStatus.PENDING)
     payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PAYED)

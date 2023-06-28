@@ -380,11 +380,11 @@ class InvoiceViewSet(viewsets.ViewSet):
         #Manually constructing the response data
         data = []
         for invoice in queryset:
-            order_data = {
+            invoice_data = {
                 "id": invoice.id,
                 "invoice_number": invoice.invoice_number,
                 "date": invoice.date,
-                "payment_method": invoice.payment_method,
+                "payment_method": invoice.order.payment_method,
                 "payment_date": invoice.payment_date,
                 "delivery_status": invoice.delivery_status,
                 "payment_status": invoice.payment_status,
@@ -403,19 +403,19 @@ class InvoiceViewSet(viewsets.ViewSet):
                     "created_date": invoice.order.form_assessment.created_date,
                     "assessed_date": invoice.order.form_assessment.assessed_date
                 }
-                order_data["order"]["form_assessment"] = form_assessment_data
+                invoice_data["order"]["form_assessment"] = form_assessment_data
                 # Add patient data from form assessment instance
                 patient_data = {
                     "name": invoice.order.form_assessment.patient.user.first_name + " " + invoice.order.form_assessment.patient.user.last_name,
                     "email": invoice.order.form_assessment.patient.user.username
                 }
-                order_data["order"]["patient"] = patient_data
+                invoice_data["order"]["patient"] = patient_data
                 # Add doctor data from form assessment instance
                 doctor_data = {
                     "name": invoice.order.form_assessment.doctor.user.first_name + " " + invoice.order.form_assessment.doctor.user.last_name,
                     "email": invoice.order.form_assessment.doctor.user.username
                 }
-                order_data["order"]["doctor"] = doctor_data
+                invoice_data["order"]["doctor"] = doctor_data
 
             # Add appointment data if available
             if invoice.order.appointment:
@@ -426,21 +426,21 @@ class InvoiceViewSet(viewsets.ViewSet):
                         "ending_time": invoice.order.appointment.availability.ending_time
                     }
                 }
-                order_data["order"]["appointment"] = appointment_data
+                invoice_data["order"]["appointment"] = appointment_data
                 # Add patient data from appointment instance
                 patient_data = {
                     "name": invoice.order.appointment.patient.user.first_name + " " + invoice.order.appointment.patient.user.last_name,
                     "email": invoice.order.appointment.patient.user.username
                 }
-                order_data["order"]["patient"] = patient_data
+                invoice_data["order"]["patient"] = patient_data
                 # Add doctor data from appointment instance
                 doctor_data = {
                     "name": invoice.order.appointment.availability.doctor.user.first_name + " " + invoice.order.appointment.availability.doctor.user.last_name,
                     "email": invoice.order.appointment.availability.doctor.user.username
                 }
-                order_data["order"]["doctor"] = doctor_data
+                invoice_data["order"]["doctor"] = doctor_data
 
-            data.append(order_data)
+            data.append(invoice_data)
 
         return Response(data, status=status.HTTP_200_OK)
 
