@@ -7,7 +7,7 @@ from django.db.models import Q
 from rest_framework import status
 from apps.users.permissions import DoctorWriteOnly, IsAllowedToAccessAssessment, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
 from apps.users.models import Pharmacy, Roles
-from .models import AppointmentStatus, FormAssessmentType, Invoice, OrderType, PharmacyReviewStatus, Availability, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
+from .models import AppointmentStatus, FormAssessmentType, Invoice, OrderStatus, OrderType, PharmacyReviewStatus, Availability, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
 from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, PrescriptionSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, SimplePrescriptionSerializer, OrderSerializer, PharmacySerializer
 from datetime import datetime
 from django.utils import timezone
@@ -113,8 +113,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             status='CANCELED').exists():
             raise ValidationError("This appointment has already been added before")
         else:
-            #Adding the appointment
-            serializer.save(patient=self.request.user.patient)
+            #saving the appointment
+            appointment = serializer.save(patient=self.request.user.patient)
+            #creating an order for the created appointment
+            order = {'appointment': appointment}
+            create_order(OrderType.VIDEO_ASSESSMENT, availability.doctor_charge, **order)
             #Updating the chosen availability status to booked.
             availability.is_booked = True
             availability.save()
@@ -143,10 +146,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 #Setting the appointment status to ONGOING
                 super().perform_update(serializer)
             elif self.request.data['status'] == AppointmentStatus.COMPLETED:
-                #Since the appointment status is completed, an order should be created for the appointment instance
-                #Creating the order for the completed appointment
-                order = {'appointment': appointment}
-                create_order(OrderType.VIDEO_ASSESSMENT, availability.doctor_charge, **order)
+                #since the appointment status is completed, updating the associated order status to completed
+                order = appointment.order
+                order.status = OrderStatus.COMPLETED
+                order.save()
                 #Setting the appointment status to COMPLETED.
                 super().perform_update(serializer)
 
@@ -274,6 +277,9 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
             serializer = AddFormAssessmentAnswerSerializer(data = answer_data, many=True)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
+                #creating an order for the form assessment instance
+                order = {'form_assessment': form_assessment}
+                create_order(OrderType.FORM_ASSESSMENT, settings.FORM_ASSESSMENT_AMOUNT, **order)
             queryset = FormAssessment(pk = form_assessment.id)
             return_serializer = ViewFormAssessmentSerializer(queryset)
             return Response(return_serializer.data, status=status.HTTP_201_CREATED)
@@ -334,9 +340,10 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
                     serializer = AddFormAssessmentFeedbackSerializer(data = form_assessment_feedback_data)
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
-                    #Creating the order for assessed form assessment
-                    order = {'form_assessment': form_assessment}
-                    create_order(OrderType.FORM_ASSESSMENT, settings.FORM_ASSESSMENT_AMOUNT, **order)
+                        #since the form assessment has been assessed by the doctor, updating the associated order status to completed
+                        order = appointment.order
+                        order.status = OrderStatus.COMPLETED
+                        order.save()
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-feedbacks/(?P<form_assessment_feedback_id>\d+)', permission_classes=[DoctorWriteOnly])

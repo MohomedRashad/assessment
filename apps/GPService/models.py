@@ -43,8 +43,7 @@ class PharmacyReviewStatus(models.TextChoices):
     PENDING = 'PENDING', _('PENDING')
 
 class PaymentMethod(models.TextChoices):
-    CREDITCARD = 'CREDITCARD', _('CREDITCARD')
-    DEBITCARD = 'DEBITCARD', _('DEBITCARD')
+    CARD = 'CARD', _('CARD')
     BANKTRANSFER = 'BANKTRANSFER', _('BANKTRANSFER')
 
 class DeliveryStatus(models.TextChoices):
