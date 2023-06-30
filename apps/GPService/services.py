@@ -17,14 +17,14 @@ def create_order(type, total_amount, **kwargs):
     #The order will be determined by the "type" argument.
     #available order types: FORM_ASSESSMENT, and VIDEO_ASSESSMENT
     if type == 'FORM_ASSESSMENT':
-        if 'form_assessment' in kwargs:
+        if 'form_assessment' in kwargs and 'payment_method' in kwargs:
             #Creating the FORM_ASSESSMENT order
-            order = Order(type = type, form_assessment = kwargs.get('form_assessment'), total_amount = total_amount)
+            order = Order(type = type, form_assessment = kwargs.get('form_assessment'), total_amount = total_amount, payment_method=kwargs.get('payment_method'))
             order.save()
     elif type == 'VIDEO_ASSESSMENT':
-        if 'appointment' in kwargs:
+        if 'appointment' in kwargs and 'payment_method' in kwargs:
             #Creating the VIDEO_ASSESSMENT order
-            order = Order(type = type, appointment = kwargs.get('appointment'), total_amount = total_amount)
+            order = Order(type = type, appointment = kwargs.get('appointment'), total_amount = total_amount, payment_method=kwargs.get('payment_method'))
             order.save()
     else:
         raise ValidationError("Invalid order type!")

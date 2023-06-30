@@ -233,7 +233,7 @@ class Order(models.Model):
         max_length=10,
         choices=OrderStatus.choices,
         default=OrderStatus.PENDING)
-    payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices, default=PaymentMethod.BANKTRANSFER)
+    payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices)
     created_date = models.DateTimeField(auto_now_add=True)
     total_amount = models.PositiveIntegerField(blank=True, null=True)
 

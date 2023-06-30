@@ -107,7 +107,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         availability = get_object_or_404(
             Availability, id = self.request.data.get('availability'))
-        if Appointment.objects.filter(
+        if 'payment_method' not in self.request.data:
+            raise ValidationError("The payment method is required")
+        elif Appointment.objects.filter(
             patient=self.request.user.patient,
             availability=self.request.data.get('availability')).exclude(
             status='CANCELED').exists():
@@ -116,7 +118,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             #saving the appointment
             appointment = serializer.save(patient=self.request.user.patient)
             #creating an order for the created appointment
-            order = {'appointment': appointment}
+            order = {'appointment': appointment, 'payment_method': self.request.data.get('payment_method')}
             create_order(OrderType.VIDEO_ASSESSMENT, availability.doctor_charge, **order)
             #Updating the chosen availability status to booked.
             availability.is_booked = True
@@ -258,6 +260,8 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
         answer_data = [] #a dictionary of answers which will be added to the database at once.
         if not 'type' in self.request.data:
             raise ValidationError("The form assessment type is required.")
+        elif not 'payment_method' in self.request.data:
+            raise ValidationError("The payment method is required")
         elif not 'answers' in self.request.data:
             raise ValidationError("The answers are required")
         else:
@@ -278,7 +282,7 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 #creating an order for the form assessment instance
-                order = {'form_assessment': form_assessment}
+                order = {'form_assessment': form_assessment, 'payment_method': self.request.data.get('payment_method')}
                 create_order(OrderType.FORM_ASSESSMENT, settings.FORM_ASSESSMENT_AMOUNT, **order)
             queryset = FormAssessment(pk = form_assessment.id)
             return_serializer = ViewFormAssessmentSerializer(queryset)
