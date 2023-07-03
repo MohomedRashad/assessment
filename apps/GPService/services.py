@@ -30,7 +30,7 @@ def create_order(type, total_amount, **kwargs):
         raise ValidationError("Invalid order type!")
 
 def set_the_associated_order_status_to_completed(prescription):
-    # A logic check to identify whether an appointment or a form assessment is in the prescription
+    # A logic check to identify the type of service
     if prescription.appointment is not None:
         order = prescription.appointment.order
         order.status = OrderStatus.COMPLETED

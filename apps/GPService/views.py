@@ -128,7 +128,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         appointment = self.get_object()
         availability = get_object_or_404(Availability, id = appointment.availability.id)
-        if not 'status' in self.request.data:
+        if 'status' not in self.request.data:
             raise ValidationError("The status has not been provided")
         elif appointment.status == AppointmentStatus.COMPLETED:
             raise ValidationError("This appointment cannot be modified as it has already been completed")
@@ -148,12 +148,16 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 #Setting the appointment status to ONGOING
                 super().perform_update(serializer)
             elif self.request.data['status'] == AppointmentStatus.COMPLETED:
-                #since the appointment status is completed, updating the associated order status to completed
-                order = appointment.order
-                order.status = OrderStatus.COMPLETED
-                order.save()
+                #The status of the associated order for the appointment should be set to completed.
+                #A logic to check whether the current appointment has a prescription added before setting the order status
+                #If the order has a prescription instance associated, the order status will be set to completed when the patient accepts or rejects the prescription
+                if appointment.prescription is not None:
+                    #Setting the order status to completed
+                    order = appointment.order
+                    order.status = OrderStatus.COMPLETED
+                    order.save()
                 #Setting the appointment status to COMPLETED.
-                super().perform_update(serializer)
+                    super().perform_update(serializer)
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
     serializer_class = SimplePrescriptionSerializer
@@ -202,7 +206,7 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
             #Updating the associated order status to completed
             order = set_the_associated_order_status_to_completed(prescription)
             #if the patient has accepted the given prescription, adding the prescription amount to the order amount
-            #If the patient has accepted the prescription before, a logic to prevent re updating the order amount
+            #also, if the patient has accepted the prescription before, an additional logic to prevent re updating the order amount
             if prescription.is_accepted == True and current_prescription_data.is_accepted == False:
                 order.total_amount += prescription.total_amount
                 order.save()

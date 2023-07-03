@@ -1,12 +1,13 @@
-from django.db.models.signals import pre_save
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Invoice, Order, OrderStatus, OrderType
 import uuid
 from datetime import date
 
-@receiver(pre_save, sender=Order)
-def generate_invoice(sender, instance, **kwargs):
-    if instance.status == OrderStatus.COMPLETED:
+@receiver(post_save, sender=Order)
+def generate_invoice(sender, created, instance, **kwargs):
+    print("The invoice signal has been triggered")
+    if instance.status == OrderStatus.COMPLETED and not Invoice.objects.filter(order=instance).exists():
                 # Generate a unique invoice number
         invoice_number = generate_unique_invoice_number()
         invoice = Invoice(order=instance, invoice_number=invoice_number, payment_method=instance.payment_method)
