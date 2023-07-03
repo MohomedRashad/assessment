@@ -6,14 +6,11 @@ from datetime import date
 
 @receiver(post_save, sender=Order)
 def generate_invoice(sender, created, instance, **kwargs):
-    print("The invoice signal has been triggered")
     if instance.status == OrderStatus.COMPLETED and not Invoice.objects.filter(order=instance).exists():
                 # Generate a unique invoice number
         invoice_number = generate_unique_invoice_number()
         invoice = Invoice(order=instance, invoice_number=invoice_number, payment_method=instance.payment_method)
         invoice.save()
-    else:
-        print("Order status is not set to completed to create an invoice")
 
 def generate_unique_invoice_number():
     # Generate a unique UUID
