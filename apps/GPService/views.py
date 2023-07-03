@@ -8,7 +8,7 @@ from rest_framework import status
 from apps.users.permissions import DoctorWriteOnly, IsAllowedToAccessAssessment, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
 from apps.users.models import Pharmacy, Roles
 from .models import AppointmentStatus, FormAssessmentType, Invoice, OrderStatus, OrderType, PharmacyReviewStatus, Availability, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, PrescriptionSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, SimplePrescriptionSerializer, OrderSerializer, PharmacySerializer
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, InvoiceSerializer, PrescriptionSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, SimplePrescriptionSerializer, OrderSerializer, PharmacySerializer
 from datetime import datetime
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -382,78 +382,13 @@ class OrderViewSet(viewsets.ViewSet):
 
 class InvoiceViewSet(viewsets.ViewSet):
     def list(self, request):
-        queryset = Invoice.objects.all()
         if self.request.user.role == Roles.PATIENT:
+            queryset = Invoice.objects.all()
             queryset = queryset.filter(Q(order__appointment__patient=self.request.user.patient) | Q(order__form_assessment__patient=self.request.user.patient))
+            serializer = InvoiceSerializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             raise PermissionDenied
-
-        #Manually constructing the response data
-        data = []
-        for invoice in queryset:
-            invoice_data = {
-                "id": invoice.id,
-                "invoice_number": invoice.invoice_number,
-                "date": invoice.date,
-                "payment_method": invoice.order.payment_method,
-                "payment_date": invoice.payment_date,
-                "delivery_status": invoice.delivery_status,
-                "payment_status": invoice.payment_status,
-                "order": {
-                    "id": invoice.order.id,
-                    "type": invoice.order.type,
-                    "created_date": invoice.order.created_date,
-                    "total_amount": invoice.order.total_amount
-                }
-            }
-
-            # Add form assessment data if available
-            if invoice.order.form_assessment:
-                form_assessment_data = {
-                    "type": invoice.order.form_assessment.type,
-                    "created_date": invoice.order.form_assessment.created_date,
-                    "assessed_date": invoice.order.form_assessment.assessed_date
-                }
-                invoice_data["order"]["form_assessment"] = form_assessment_data
-                # Add patient data from form assessment instance
-                patient_data = {
-                    "name": invoice.order.form_assessment.patient.user.first_name + " " + invoice.order.form_assessment.patient.user.last_name,
-                    "email": invoice.order.form_assessment.patient.user.username
-                }
-                invoice_data["order"]["patient"] = patient_data
-                # Add doctor data from form assessment instance
-                doctor_data = {
-                    "name": invoice.order.form_assessment.doctor.user.first_name + " " + invoice.order.form_assessment.doctor.user.last_name,
-                    "email": invoice.order.form_assessment.doctor.user.username
-                }
-                invoice_data["order"]["doctor"] = doctor_data
-
-            # Add appointment data if available
-            if invoice.order.appointment:
-                appointment_data = {
-                    "availability": {
-                        "date": invoice.order.appointment.availability.date,
-                        "starting_time": invoice.order.appointment.availability.starting_time,
-                        "ending_time": invoice.order.appointment.availability.ending_time
-                    }
-                }
-                invoice_data["order"]["appointment"] = appointment_data
-                # Add patient data from appointment instance
-                patient_data = {
-                    "name": invoice.order.appointment.patient.user.first_name + " " + invoice.order.appointment.patient.user.last_name,
-                    "email": invoice.order.appointment.patient.user.username
-                }
-                invoice_data["order"]["patient"] = patient_data
-                # Add doctor data from appointment instance
-                doctor_data = {
-                    "name": invoice.order.appointment.availability.doctor.user.first_name + " " + invoice.order.appointment.availability.doctor.user.last_name,
-                    "email": invoice.order.appointment.availability.doctor.user.username
-                }
-                invoice_data["order"]["doctor"] = doctor_data
-
-            data.append(invoice_data)
-
-        return Response(data, status=status.HTTP_200_OK)
 
 class PharmacyViewSet(viewsets.ModelViewSet):
     queryset = Pharmacy.objects.all()

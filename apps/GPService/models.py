@@ -241,6 +241,7 @@ class Invoice(models.Model):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='invoice')
     invoice_number = models.CharField(max_length=20, unique=True)
     date = models.DateField(default=timezone.now)
+    payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices)
     payment_date = models.DateField(default=timezone.now)
     delivery_status = models.CharField(max_length=20, choices=DeliveryStatus.choices, default=DeliveryStatus.PENDING)
     payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PAYED)
