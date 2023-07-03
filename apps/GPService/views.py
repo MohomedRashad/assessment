@@ -7,8 +7,8 @@ from django.db.models import Q
 from rest_framework import status
 from apps.users.permissions import DoctorWriteOnly, IsAllowedToAccessAssessment, SystemAdminOrReadOnly, PharmacyOrReadOnly, PatientWriteOnly
 from apps.users.models import Pharmacy, Roles
-from .models import AppointmentStatus, FormAssessmentType, OrderType, PharmacyReviewStatus, Availability, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
-from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, PrescriptionSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, SimplePrescriptionSerializer, OrderSerializer, PharmacySerializer
+from .models import AppointmentStatus, FormAssessmentType, Invoice, OrderStatus, OrderType, PharmacyReviewStatus, Availability, Appointment, Medicine, Treatment, FormAssessmentQuestion, FormAssessment, FormAssessmentAnswer, FormAssessmentFeedback, Prescription, Order, Country, RecommendedVaccine
+from .serializers import AvailabilitySerializer, AppointmentSerializer, AddAppointmentSerializer, InvoiceSerializer, PrescriptionSerializer, UpdateAppointmentStatusSerializer, MedicineSerializer, CountrySerializer, ViewRecommendedVaccineSerializer, AddRecommendedVaccineSerializer, TreatmentSerializer, FormAssessmentQuestionSerializer, ViewAllFormAssessmentSerializer, ViewFormAssessmentSerializer, ViewFormAssessmentAnswerSerializer, AddFormAssessmentAnswerSerializer, ViewFormAssessmentFeedbackSerializer, AddFormAssessmentFeedbackSerializer, SimplePrescriptionSerializer, OrderSerializer, PharmacySerializer
 from datetime import datetime
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -107,14 +107,19 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         availability = get_object_or_404(
             Availability, id = self.request.data.get('availability'))
-        if Appointment.objects.filter(
+        if 'payment_method' not in self.request.data:
+            raise ValidationError("The payment method is required")
+        elif Appointment.objects.filter(
             patient=self.request.user.patient,
             availability=self.request.data.get('availability')).exclude(
             status='CANCELED').exists():
             raise ValidationError("This appointment has already been added before")
         else:
-            #Adding the appointment
-            serializer.save(patient=self.request.user.patient)
+            #saving the appointment
+            appointment = serializer.save(patient=self.request.user.patient)
+            #creating an order for the created appointment
+            order = {'appointment': appointment, 'payment_method': self.request.data.get('payment_method')}
+            create_order(OrderType.VIDEO_ASSESSMENT, availability.doctor_charge, **order)
             #Updating the chosen availability status to booked.
             availability.is_booked = True
             availability.save()
@@ -123,7 +128,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         appointment = self.get_object()
         availability = get_object_or_404(Availability, id = appointment.availability.id)
-        if not 'status' in self.request.data:
+        if 'status' not in self.request.data:
             raise ValidationError("The status has not been provided")
         elif appointment.status == AppointmentStatus.COMPLETED:
             raise ValidationError("This appointment cannot be modified as it has already been completed")
@@ -143,12 +148,16 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 #Setting the appointment status to ONGOING
                 super().perform_update(serializer)
             elif self.request.data['status'] == AppointmentStatus.COMPLETED:
-                #Since the appointment status is completed, an order should be created for the appointment instance
-                #Creating the order for the completed appointment
-                order = {'appointment': appointment}
-                create_order(OrderType.VIDEO_ASSESSMENT, availability.doctor_charge, **order)
+                #The status of the associated order for the appointment should be set to completed.
+                #A logic to check whether the current appointment has a prescription added before setting the order status
+                #If the order has a prescription instance associated, the order status will be set to completed when the patient accepts or rejects the prescription
+                if appointment.prescription is not None:
+                    #Setting the order status to completed
+                    order = appointment.order
+                    order.status = OrderStatus.COMPLETED
+                    order.save()
                 #Setting the appointment status to COMPLETED.
-                super().perform_update(serializer)
+                    super().perform_update(serializer)
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
     serializer_class = SimplePrescriptionSerializer
@@ -188,18 +197,16 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def perform_update(self, instance):
         current_prescription_data = self.get_object()
-        #todo: should implement proper permission and user type validations to allow specific data to be updated in the prescription instance
         validated_data = instance.validated_data
         # Check if the pharmacy_review_status is rejected and reason_for_rejection is not provided
         if 'pharmacy_review_status' in validated_data and validated_data['pharmacy_review_status'] == 'REJECTED' and 'reason_for_rejection' not in validated_data:
             raise ValidationError('Reason for rejection is required when pharmacy review status is set to rejected.')
         elif 'is_accepted' in validated_data:
-            #todo: only the patient user type can update the is_accepted property of a prescription
             prescription = instance.save()
             #Updating the associated order status to completed
             order = set_the_associated_order_status_to_completed(prescription)
             #if the patient has accepted the given prescription, adding the prescription amount to the order amount
-            #If the patient has accepted the prescription before, a logic to prevent re updating the order amount
+            #also, if the patient has accepted the prescription before, an additional logic to prevent re updating the order amount
             if prescription.is_accepted == True and current_prescription_data.is_accepted == False:
                 order.total_amount += prescription.total_amount
                 order.save()
@@ -257,6 +264,8 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
         answer_data = [] #a dictionary of answers which will be added to the database at once.
         if not 'type' in self.request.data:
             raise ValidationError("The form assessment type is required.")
+        elif not 'payment_method' in self.request.data:
+            raise ValidationError("The payment method is required")
         elif not 'answers' in self.request.data:
             raise ValidationError("The answers are required")
         else:
@@ -276,6 +285,9 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
             serializer = AddFormAssessmentAnswerSerializer(data = answer_data, many=True)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
+                #creating an order for the form assessment instance
+                order = {'form_assessment': form_assessment, 'payment_method': self.request.data.get('payment_method')}
+                create_order(OrderType.FORM_ASSESSMENT, settings.FORM_ASSESSMENT_AMOUNT, **order)
             queryset = FormAssessment(pk = form_assessment.id)
             return_serializer = ViewFormAssessmentSerializer(queryset)
             return Response(return_serializer.data, status=status.HTTP_201_CREATED)
@@ -336,9 +348,10 @@ class FormAssessmentViewSet(viewsets.ModelViewSet):
                     serializer = AddFormAssessmentFeedbackSerializer(data = form_assessment_feedback_data)
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
-                    #Creating the order for assessed form assessment
-                    order = {'form_assessment': form_assessment}
-                    create_order(OrderType.FORM_ASSESSMENT, settings.FORM_ASSESSMENT_AMOUNT, **order)
+                        #since the form assessment has been assessed by the doctor, updating the associated order status to completed
+                        order = appointment.order
+                        order.status = OrderStatus.COMPLETED
+                        order.save()
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['put'], detail=False, url_path='(?P<form_assessment_id>\d+)/form-assessment-feedbacks/(?P<form_assessment_feedback_id>\d+)', permission_classes=[DoctorWriteOnly])
@@ -365,12 +378,21 @@ class OrderViewSet(viewsets.ViewSet):
         elif self.request.user.role == Roles.PATIENT:
             queryset = queryset.filter(Q(appointment__patient=self.request.user.patient) | Q(form_assessment__patient=self.request.user.patient))
         elif self.request.user.role == Roles.PHARMACY:
-            #todo
             print("Should implement the pharmacy logic")
         if type is not None:
             queryset = queryset.filter(type = type)
         serializer = OrderSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class InvoiceViewSet(viewsets.ViewSet):
+    def list(self, request):
+        if self.request.user.role == Roles.PATIENT:
+            queryset = Invoice.objects.all()
+            queryset = queryset.filter(Q(order__appointment__patient=self.request.user.patient) | Q(order__form_assessment__patient=self.request.user.patient))
+            serializer = InvoiceSerializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            raise PermissionDenied
 
 class PharmacyViewSet(viewsets.ModelViewSet):
     queryset = Pharmacy.objects.all()
